@@ -338,6 +338,24 @@ export const MOBILE_CSS = `
     display: none !important;
   }
 
+  /* --- Background jobs indicator (dsh-client-ui-jobs) on mobile ---
+     The official entry sits in the session header actions. Its dropdown is
+     anchored to the trigger's LEFT edge (left: 0), so from a right-edge
+     trigger the 336px panel spills past the viewport. Re-anchor it to the
+     trigger's right edge instead. The dropdown class is a hashed CSS-module
+     name, so target it by the stable _menu suffix inside the header. */
+  [data-phase] header ul[class$="_menu"] {
+    left: auto !important;
+    right: 0 !important;
+  }
+  /* Our Files action is absolutely pinned to the far right and would cover
+     the jobs trigger while background jobs exist. Hide the header Files
+     action for as long as the jobs entry is present — the drawer footer
+     keeps a Files entry, so file access is not lost. */
+  [data-phase] header:has([class$="_root"] > button[class$="_trigger"]) [data-mobile-nav="files"] {
+    display: none !important;
+  }
+
   /* --- Settings dialog on mobile ---
      Desktop: 800px two-column flex (188px nav + content). Mobile: a
      near-full-width sheet — nav tabs wrap into rows on top, option rows
