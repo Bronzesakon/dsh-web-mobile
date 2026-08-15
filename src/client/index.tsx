@@ -126,9 +126,13 @@ export function apply(ctx: ClientContext): void {
       frame()?.setAttribute('data-aionui-preview-open', '')
     }
     const sync = (): void => {
-      const pv = document.querySelector('[data-aionui-preview-col]')
+      const pv = document.querySelector<HTMLElement>('[data-aionui-preview-col]')
       if (pv === null) return
-      if (getComputedStyle(pv).visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
+      // Read the suite's inline visibility, not the computed value: while the
+      // `data-aionui-preview-open` marker is present our stylesheet forces the
+      // sheet visible with !important, so getComputedStyle() would never report
+      // hidden and the marker would never be cleared.
+      if (pv.style.visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
     }
     document.addEventListener('click', onTap, true)
     const observer = new MutationObserver(sync)
