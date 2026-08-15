@@ -1,0 +1,15 @@
+/** `mobileNav` namespace dictionaries: drawer controls. */
+/** Dictionary namespace owned by this plugin. */
+export declare const NS = "mobileNav";
+/** Simplified Chinese dictionary (the key-set source of truth). */
+export declare const zh: {
+    readonly open: "打开目录";
+    readonly close: "收起目录";
+    readonly backdrop: "点击关闭目录";
+    readonly sessionLog: "导出会话日志";
+};
+/** English dictionary, key-identical to the Chinese source of truth. */
+export declare const en: Record<MobileNavKey, string>;
+/** Key domain of the `mobileNav` namespace (zh is the source of truth). */
+export type MobileNavKey = keyof typeof zh;
+//# sourceMappingURL=locales.d.ts.map
