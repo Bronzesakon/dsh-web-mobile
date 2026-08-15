@@ -309,17 +309,29 @@ export const MOBILE_CSS = `
      tools = first child, permission pill = its 2nd child, model pill =
      row's last child. */
   [data-phase] [class*="_card"]:has(textarea) > :last-child {
-    gap: 8px !important;
+    gap: 12px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child {
-    gap: 8px !important;
+    gap: 10px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child > :nth-child(2) {
     flex: 0 0 auto !important;
+    gap: 10px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :last-child {
     flex: 1 1 auto !important;
+    gap: 12px !important;
     min-width: 0 !important;
+  }
+
+  /* Model switcher menu: the official dropdown is right-aligned to the
+     trigger (right:0). The model pill sits near the center of the composer,
+     so on a phone the 240px menu overflows the left edge and looks off-center.
+     Center the menu on the trigger instead. */
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]) > [class$="_menu"] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
   }
 
   /* --- Session header on mobile ---
