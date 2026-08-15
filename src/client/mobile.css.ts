@@ -475,7 +475,13 @@ export const MOBILE_CSS = `
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
     animation: dsh-mobile-nav-sheet-up .24s var(--ds-ease-out, ease-in-out) !important;
   }
+  /* Preview (file content) bottom sheet. Gated shut by default: the suite
+     persists open preview tabs in localStorage and restores them on load,
+     which would pop the sheet over the fresh UI. The client only sets the
+     frame marker after the user taps a file row in the explorer; the
+     suite's own collapse chevron clears it via the visibility watcher. */
   [data-aionui-preview-col] {
+    visibility: hidden !important;
     position: fixed !important;
     left: 8px !important;
     right: 8px !important;
@@ -489,6 +495,10 @@ export const MOBILE_CSS = `
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
     z-index: 56 !important;
     animation: dsh-mobile-nav-sheet-up .24s var(--ds-ease-out, ease-in-out) !important;
+  }
+  /* User-opened preview sheet (frame marker, set on file-row tap). */
+  [data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-preview-col] {
+    visibility: visible !important;
   }
   /* The Files action opens the explorer sheet (frame marker). */
   [data-mobile-nav="frame"][data-aionui-explorer-open] [data-aionui-explorer-col] {

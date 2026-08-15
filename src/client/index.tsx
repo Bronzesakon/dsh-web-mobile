@@ -58,6 +58,39 @@ export function apply(ctx: ClientContext): void {
     return () => document.removeEventListener('click', onChevronClick, true)
   }, 'dsh-mobile-nav: aionui explorer close marker')
 
+  // dsh-web-ui compatibility: the aionui preview column persists its open
+  // tabs in localStorage and restores them on load, which would pop the
+  // preview sheet over the fresh UI after a reload. Gate it like the
+  // explorer: the stylesheet keeps the column hidden unless the frame
+  // carries `data-aionui-preview-open`; this effect sets that marker when
+  // the user actually taps a file row in the explorer sheet, and clears it
+  // whenever the suite hides the column again (collapse chevron / tab
+  // close), so a restored-but-unwanted sheet never appears.
+  ctx.effect(() => {
+    const narrow = window.matchMedia('(max-width: 1023px)')
+    if (!narrow.matches) return () => {}
+    const frame = (): HTMLElement | null => document.querySelector('[data-mobile-nav="frame"]')
+    const onTap = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target === null) return
+      if (target.closest('[data-aionui-explorer-col] [class$="_treeRow"]') === null) return
+      frame()?.setAttribute('data-aionui-preview-open', '')
+    }
+    const sync = (): void => {
+      const pv = document.querySelector('[data-aionui-preview-col]')
+      if (pv === null) return
+      if (getComputedStyle(pv).visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
+    }
+    document.addEventListener('click', onTap, true)
+    const observer = new MutationObserver(sync)
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] })
+    sync()
+    return () => {
+      document.removeEventListener('click', onTap, true)
+      observer.disconnect()
+    }
+  }, 'dsh-mobile-nav: preview sheet open marker')
+
   // The official conversation status row (turns / steps / LLM time / TTFT /
   // cache) has a hashed class, so the stylesheet cannot target it directly.
   // Mark the exact row on narrow screens by text: a [class$=_root] that
