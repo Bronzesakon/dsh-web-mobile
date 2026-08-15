@@ -14,6 +14,7 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 
 ## 特性
 
+- **状态栏适配**:保留系统状态栏——viewport 加 `viewport-fit=cover`,页面各表面按 `env(safe-area-inset-top)` 下移,状态栏/刘海永不遮挡内容;`theme-color` 跟随主题背景(深/浅色自动切换),Android 状态栏与页面同色一体;`touch-action: manipulation` 禁用双击放大与 300ms 点击延迟(保留双指缩放);
 - **会话全宽**:网格改为 `1fr 0 0`,目录抽屉 overlay 滑入,宽度贴合侧栏内容(约 280px),关闭后完全移出视口,左侧无阴影残留;
 - **避开摄像头**:不做顶部预留空间,打开目录的浮动按钮放在左缘 y=72px(摄像头带下方);
 - **会话头部重排**:移动端按 [目录按钮] [会话名称] [模式徽标] 排列;Session log 胶囊移到抽屉底部(Settings 旁),复用官方下载逻辑;

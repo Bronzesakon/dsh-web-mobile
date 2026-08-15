@@ -76,10 +76,12 @@ export const MOBILE_CSS = `
   cursor: default;
 }
 
-/* Floating fallback button (hero / blank phases without a session header). */
+/* Floating fallback button (hero / blank phases without a session header).
+   The top clears the camera band below the status bar; when the client has
+   set viewport-fit=cover the safe-area inset moves it below the notch too. */
 [data-mobile-nav="fab"] {
   position: absolute;
-  top: 72px; /* left edge below the camera band; the hero's left margin is empty here */
+  top: calc(env(safe-area-inset-top, 0px) + 72px);
   left: 10px;
   z-index: 21;
   display: inline-flex;
@@ -145,12 +147,32 @@ export const MOBILE_CSS = `
 /* ---------- mobile-only layout ---------- */
 
 @media (max-width: 1023px) {
+  /* --- Phone chrome ---
+     The system status bar stays visible (no fullscreen). Two adjustments
+     make it behave:
+     - touch-action: manipulation kills double-tap-to-zoom (and the 300ms
+       tap delay) while keeping pan and pinch zoom; the client also
+       suppresses legacy-iOS gesturestart as a fallback.
+     - With the client's viewport-fit=cover, env(safe-area-inset-top) is the
+       status bar / notch height; the rules below push the app content below
+       it so the status bar never covers anything. Off notched phones (or in
+       a normal browser tab where the layout viewport already sits below the
+       status bar) the inset is 0 and nothing shifts. */
+  html,
+  body {
+    touch-action: manipulation !important;
+  }
+
   /* AppFrame: the drawer takes the sidebar column out of grid flow, so the
      remaining in-flow items (center, details) land in tracks 1..2: give the
-     center every pixel and keep the details track at zero. */
+     center every pixel and keep the details track at zero. The top padding
+     clears the status bar / notch for every in-flow surface (session header,
+     messages, composer); the absolutely-positioned drawer is unaffected (its
+     containing block is the frame's padding box, i.e. still the frame top). */
   [data-mobile-nav="frame"] {
     position: relative !important;
     grid-template-columns: minmax(0, 1fr) 0 0 !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
   }
 
   /* The sidebar column (first grid child) becomes a left drawer. The drawer
@@ -172,6 +194,12 @@ export const MOBILE_CSS = `
     transform: translateX(-110%);
     transition: transform .28s var(--ds-ease-in-out, ease-in-out);
     background: var(--dsw-alias-bg-base, #ffffff);
+    /* Keep the drawer's own content below the status bar / notch: the drawer
+       spans the full frame height (its absolute containing block is the
+       frame's padding box, so the frame's own safe-area padding does NOT
+       reach it). The drawer background paints the status-bar strip, which
+       the client's theme-color meta matches, so the strip reads seamless. */
+    padding-top: env(safe-area-inset-top, 0px) !important;
     /* Kill the official sidebarCol right border: with the backdrop the edge
        reads cleanly, and the settings dialog (width:100% of this box) stays
        pixel-flush with the drawer. */
@@ -326,15 +354,17 @@ export const MOBILE_CSS = `
     left: 8px !important;
     /* Fixed top (no translateY): a transform on the panel combined with the
        panel overflowing the max-content drawer shifts the fixed overlay's
-       coordinate frame, dragging the whole sidebar content off-screen. */
-    top: 12px !important;
+       coordinate frame, dragging the whole sidebar content off-screen. The
+       safe-area inset keeps the sheet below the status bar / notch. */
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
     width: calc(100vw - 16px) !important;
     max-width: calc(100vw - 16px) !important;
     /* Height follows the content (no dead space under a short page); it
-       caps at 100dvh-24 and the options area scrolls only then. */
+       caps at 100dvh-24 (less the safe-area top) and the options area
+       scrolls only then. */
     height: auto !important;
-    max-height: min(800px, calc(100vh - 24px)) !important;
-    max-height: min(800px, calc(100dvh - 24px)) !important;
+    max-height: min(800px, calc(100vh - 24px - env(safe-area-inset-top, 0px))) !important;
+    max-height: min(800px, calc(100dvh - 24px - env(safe-area-inset-top, 0px))) !important;
     flex-direction: column !important;
     border-radius: 14px !important;
     animation: dsh-mobile-nav-sheet-in .22s var(--ds-ease-out, ease-in-out);
