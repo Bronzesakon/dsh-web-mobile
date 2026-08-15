@@ -438,6 +438,21 @@ export const MOBILE_CSS = `
   [data-aionui-explorer-col] {
     visibility: hidden !important;
   }
+  /* The explorer (file tree) sheet: inset card instead of a raw full-screen
+     takeover — rounded corners, 8px margins and a shadow read as a floating
+     panel and keep the app frame visible around it. */
+  [data-aionui-explorer-col] {
+    left: 8px !important;
+    right: 8px !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, .2) !important;
+    animation: dsh-mobile-nav-sheet-in .22s var(--ds-ease-out, ease-in-out) !important;
+  }
   [data-aionui-preview-col] {
     position: fixed !important;
     left: 8px !important;
