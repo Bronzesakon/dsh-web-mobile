@@ -293,11 +293,9 @@ export const MOBILE_CSS = `
      phone leaves a large blank strip on the left and pushes the bubble high.
      On mobile let the user message fill the same full width as assistant
      messages (the bubble background then spans the whole message column). */
-  [data-phase] [class$="_userStack"] {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
+  [data-phase] [class$="_userStack"],
   [data-phase] [class$="_userStack"] [class$="_bubble"] {
+    box-sizing: border-box !important;
     width: 100% !important;
     max-width: 100% !important;
   }
