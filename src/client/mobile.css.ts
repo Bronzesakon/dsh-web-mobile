@@ -471,10 +471,14 @@ export const MOBILE_CSS = `
     left: 8px !important;
     right: 8px !important;
     top: auto !important;
-    bottom: 40px !important;
+    /* Align the sheet's bottom edge exactly with the bottom line of the
+       composer card: the card sits 36px above the viewport bottom (8px
+       composer padding + the 28px stats strip below the card), so the
+       sheet uses the same 36px bottom offset. */
+    bottom: 36px !important;
     width: auto !important;
     height: min(55dvh, 460px) !important;
-    max-height: calc(100dvh - 48px) !important;
+    max-height: calc(100dvh - 16px) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;

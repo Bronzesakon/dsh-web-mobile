@@ -17,8 +17,14 @@ export interface MobileNavToggleProps extends PropsRuntime<'conversation.session
  * Hidden entirely on wide screens (CSS media query).
  */
 export function MobileNavToggle({ toggleSidebar, t }: MobileNavToggleProps) {
-  const openExplorer = (): void => {
-    document.querySelector('[data-mobile-nav="frame"]')?.setAttribute('data-aionui-explorer-open', '')
+  const toggleExplorer = (): void => {
+    const frame = document.querySelector('[data-mobile-nav="frame"]')
+    if (frame === null) return
+    if (frame.hasAttribute('data-aionui-explorer-open')) {
+      frame.removeAttribute('data-aionui-explorer-open')
+    } else {
+      frame.setAttribute('data-aionui-explorer-open', '')
+    }
   }
   return (
     <>
@@ -36,7 +42,7 @@ export function MobileNavToggle({ toggleSidebar, t }: MobileNavToggleProps) {
         data-mobile-nav="files"
         aria-label={t('files')}
         title={t('files')}
-        onClick={openExplorer}
+        onClick={toggleExplorer}
       >
         <IconFolderOpenOutline16 size={16} />
       </button>
