@@ -87,6 +87,43 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'dsh-mobile-nav: stats line marker')
 
+  // The dsh-web-ui explorer / preview columns toggle via `visibility`
+  // (their inline style), which never restarts a CSS animation — so the
+  // sheets would only animate on first mount. Replay the rise animation
+  // with the Web Animations API each time a column turns visible, then
+  // leave the resting state to the stylesheet.
+  ctx.effect(() => {
+    const narrow = window.matchMedia('(max-width: 1023px)')
+    if (!narrow.matches) return () => {}
+    const cols = ['[data-aionui-explorer-col]', '[data-aionui-preview-col]']
+    const seen = new Map<string, boolean>()
+    const play = (el: Element): void => {
+      el.animate(
+        [
+          { opacity: 0, transform: 'translateY(28px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' },
+      )
+    }
+    const check = (): void => {
+      for (const sel of cols) {
+        const el = document.querySelector(sel)
+        if (el === null) continue
+        const visible = getComputedStyle(el).visibility === 'visible'
+        const prev = seen.get(sel) ?? false
+        if (visible && !prev) play(el)
+        seen.set(sel, visible)
+      }
+    }
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { attributes: true, subtree: true })
+    check()
+    return () => {
+      observer.disconnect()
+    }
+  }, 'dsh-mobile-nav: sheet rise animation replay')
+
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
     id: 'mobile-nav-toggle',
