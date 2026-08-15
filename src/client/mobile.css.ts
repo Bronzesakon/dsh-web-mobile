@@ -544,34 +544,32 @@ export const MOBILE_CSS = `
 
   /* ---------- dsh-web-ui polish: conversation stats line ----------
      The official session-status row (turns / steps / LLM time / TTFT /
-     cache) is long, and wrapping takes 3-4 lines on a phone. The client
-     marks the exact row with [data-mobile-nav="stats"] (text-anchored, see
-     index.tsx); keep it on ONE line that scrolls horizontally — the row
-     never grows vertically and every metric stays reachable. */
+     cache) is long. The client marks the exact row with
+     [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
+     targeted). Plan: EVERY metric stays visible with no scrolling — metric
+     groups (each a standalone span) wrap as whole units at a tight
+     line-height and smaller size, decorative pipes are hidden, and the
+     group gap replaces them. Reads as ~3 compact lines instead of one
+     clipped line or a tall loose stack. */
 
   [data-mobile-nav="stats"] {
-    white-space: nowrap !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scrollbar-width: thin !important;
-    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    column-gap: 12px !important;
+    row-gap: 0 !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     padding-bottom: env(safe-area-inset-bottom, 8px) !important;
-    line-height: 18px !important;
+    line-height: 16px !important;
     font-size: 12px !important;
-    /* Fade the right edge so it reads as "more below the fold". */
-    mask-image: linear-gradient(to right, #000 86%, transparent 99%) !important;
-    -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 99%) !important;
-  }
-  [data-mobile-nav="stats"]::-webkit-scrollbar {
-    height: 2px !important;
-  }
-  [data-mobile-nav="stats"]::-webkit-scrollbar-thumb {
-    background: var(--dsw-alias-border-l1, rgba(0, 0, 0, .18)) !important;
-    border-radius: 2px !important;
   }
   [data-mobile-nav="stats"] > * {
     display: inline-block !important;
     white-space: nowrap !important;
+  }
+  [data-mobile-nav="stats-pipe"] {
+    display: none !important;
   }
 
   /* ---------- hero composer on mobile ----------

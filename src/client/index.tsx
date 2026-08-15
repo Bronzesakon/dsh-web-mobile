@@ -62,7 +62,8 @@ export function apply(ctx: ClientContext): void {
   // Mark the exact row on narrow screens by text: a [class$=_root] that
   // carries the metrics text and no textarea (the composer card also ends in
   // _root and can mention turns in its model line). The marker lets the CSS
-  // collapse the row to one horizontally scrolling line.
+  // lay the row out compactly with every metric visible. The decorative
+  // pipes get their own marker so the CSS can hide them.
   ctx.effect(() => {
     const narrow = window.matchMedia('(max-width: 1023px)')
     if (!narrow.matches) return () => {}
@@ -74,6 +75,11 @@ export function apply(ctx: ClientContext): void {
         if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
         if (root.querySelector('textarea') !== null) continue
         root.setAttribute('data-mobile-nav', 'stats')
+        for (const span of root.querySelectorAll('span')) {
+          if ((span.textContent ?? '').trim() === '|') {
+            span.setAttribute('data-mobile-nav', 'stats-pipe')
+          }
+        }
         marked = true
         return
       }
