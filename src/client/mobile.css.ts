@@ -485,10 +485,10 @@ export const MOBILE_CSS = `
     left: 8px !important;
     right: 8px !important;
     top: auto !important;
-    bottom: 24px !important;
+    bottom: 40px !important;
     width: auto !important;
     height: min(50dvh, 420px) !important;
-    max-height: calc(100dvh - 32px) !important;
+    max-height: calc(100dvh - 48px) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
