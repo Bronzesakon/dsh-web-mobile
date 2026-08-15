@@ -57,6 +57,35 @@ export function apply(ctx: ClientContext): void {
     return () => document.removeEventListener('click', onChevronClick, true)
   }, 'dsh-mobile-nav: aionui explorer close marker')
 
+  // The official conversation status row (turns / steps / LLM time / TTFT /
+  // cache) has a hashed class, so the stylesheet cannot target it directly.
+  // Mark the exact row on narrow screens by text: a [class$=_root] that
+  // carries the metrics text and no textarea (the composer card also ends in
+  // _root and can mention turns in its model line). The marker lets the CSS
+  // collapse the row to one horizontally scrolling line.
+  ctx.effect(() => {
+    const narrow = window.matchMedia('(max-width: 1023px)')
+    if (!narrow.matches) return () => {}
+    let marked = false
+    const mark = (): void => {
+      if (marked) return
+      for (const root of document.querySelectorAll('[data-phase] [class$="_root"]')) {
+        const text = root.textContent ?? ''
+        if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
+        if (root.querySelector('textarea') !== null) continue
+        root.setAttribute('data-mobile-nav', 'stats')
+        marked = true
+        return
+      }
+    }
+    const observer = new MutationObserver(mark)
+    observer.observe(document.body, { childList: true, subtree: true })
+    mark()
+    return () => {
+      observer.disconnect()
+    }
+  }, 'dsh-mobile-nav: stats line marker')
+
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
     id: 'mobile-nav-toggle',

@@ -542,18 +542,34 @@ export const MOBILE_CSS = `
     white-space: nowrap !important;
   }
 
-  /* ---------- dsh-web-ui polish: live-stats line ----------
-     The generation-throughput row (turns / steps / LLM time) renders as one
-     nowrap line inside the composer stack and clips on phones. Let it wrap,
-     but wrap whole metric groups: each group becomes an inline-block so
-     "Tool call 136m1s" never splits mid-phrase. Bottom padding keeps the
-     last line clear of the gesture bar. */
+  /* ---------- dsh-web-ui polish: conversation stats line ----------
+     The official session-status row (turns / steps / LLM time / TTFT /
+     cache) is long, and wrapping takes 3-4 lines on a phone. The client
+     marks the exact row with [data-mobile-nav="stats"] (text-anchored, see
+     index.tsx); keep it on ONE line that scrolls horizontally — the row
+     never grows vertically and every metric stays reachable. */
 
-  [data-phase] [class$="_composerStack"] [class$="_root"] {
-    white-space: normal !important;
-    padding-bottom: env(safe-area-inset-bottom, 12px) !important;
+  [data-mobile-nav="stats"] {
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+    line-height: 18px !important;
+    font-size: 12px !important;
+    /* Fade the right edge so it reads as "more below the fold". */
+    mask-image: linear-gradient(to right, #000 86%, transparent 99%) !important;
+    -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 99%) !important;
   }
-  [data-phase] [class$="_composerStack"] [class$="_root"] > * {
+  [data-mobile-nav="stats"]::-webkit-scrollbar {
+    height: 2px !important;
+  }
+  [data-mobile-nav="stats"]::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-border-l1, rgba(0, 0, 0, .18)) !important;
+    border-radius: 2px !important;
+  }
+  [data-mobile-nav="stats"] > * {
     display: inline-block !important;
     white-space: nowrap !important;
   }
