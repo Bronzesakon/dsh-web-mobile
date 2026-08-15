@@ -321,7 +321,7 @@ export const MOBILE_CSS = `
      primitives Modal, header(title+close)+description+body) keeps its
      official centered card layout. Requires :has() support
      (Chromium 105+, 2022). */
-  [aria-modal="true"]:has(> :first-child > :last-child > button) {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) {
     position: absolute !important;
     left: 8px !important;
     /* Fixed top (no translateY): a transform on the panel combined with the
@@ -341,12 +341,12 @@ export const MOBILE_CSS = `
   }
   /* The settings sheet's dimmed mask fades in with the panel (the mask is
      the first child of the overlay that directly contains the sheet). */
-  :has(> [aria-modal="true"]:has(> :first-child > :last-child > button)) > :first-child {
+  :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"]))) > :first-child {
     animation: dsh-mobile-nav-fade .18s var(--ds-ease-out, ease-in-out);
   }
   @media (prefers-reduced-motion: reduce) {
-    [aria-modal="true"]:has(> :first-child > :last-child > button),
-    :has(> [aria-modal="true"]:has(> :first-child > :last-child > button)) > :first-child {
+    [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])),
+    :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"]))) > :first-child {
       animation: none !important;
     }
   }
@@ -358,17 +358,17 @@ export const MOBILE_CSS = `
   /* Nav bar: hide the "Settings" caption (redundant on a full-width sheet)
      and wrap the tab list so every tab is visible — a horizontal scroll cut
      the last tab ("Plugins") off with no affordance to scroll. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :first-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child {
     width: 100% !important;
     flex-direction: row !important;
     align-items: center !important;
     gap: 6px !important;
     padding: 10px 12px 8px !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :first-child > :first-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :first-child {
     display: none !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :first-child > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :last-child {
     flex-direction: row !important;
     flex-wrap: wrap !important;
     width: 100% !important;
@@ -380,17 +380,17 @@ export const MOBILE_CSS = `
      children carry official auto-margins that would defeat space-between,
      so neutralize them. The close button gets a round tappable base so it
      reads as its own control, not part of the outline button. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child > :first-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child {
     justify-content: space-between !important;
     align-items: center !important;
     padding: 0 12px !important;
     min-height: 40px !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child > :first-child > * {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child > * {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child > :first-child > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child > :last-child {
     width: 32px !important;
     height: 32px !important;
     border-radius: 50% !important;
@@ -417,11 +417,11 @@ export const MOBILE_CSS = `
   }
   /* Content: the options scroll area gets bottom breathing room so the last
      row never sits flush against the sheet's rounded corner. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child {
     flex: 1 1 auto !important;
     min-height: 0 !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :last-child {
     padding: 0 12px 24px !important;
   }
 
@@ -553,7 +553,7 @@ export const MOBILE_CSS = `
 
   /* Nav tabs: a stable 3-per-row grid (two clean rows instead of a ragged
      wrap) with tighter cells. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button) > :first-child > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :last-child {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 6px !important;
