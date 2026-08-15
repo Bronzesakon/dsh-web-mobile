@@ -36,6 +36,27 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'dsh-mobile-nav: styles')
 
+  // dsh-web-ui compatibility: the aionui explorer column would render as a
+  // full-screen sheet over the whole mobile UI whenever its (persisted)
+  // expanded state is active — including right after a reload, with no way
+  // out (the suite's floating expand button only exists while collapsed).
+  // Instead of fighting the suite's store timing, the mobile stylesheet keeps
+  // the explorer column hidden by default and the drawer's Files action
+  // opens it via the `data-aionui-explorer-open` marker on the frame. This
+  // effect just clears that marker when the sheet's own collapse chevron is
+  // tapped, so closing is symmetric with opening.
+  ctx.effect(() => {
+    const narrow = window.matchMedia('(max-width: 1023px)')
+    if (!narrow.matches) return () => {}
+    const onChevronClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target === null || !target.closest('.aionui-collapse-chevron')) return
+      document.querySelector('[data-mobile-nav="frame"]')?.removeAttribute('data-aionui-explorer-open')
+    }
+    document.addEventListener('click', onChevronClick, true)
+    return () => document.removeEventListener('click', onChevronClick, true)
+  }, 'dsh-mobile-nav: aionui explorer close marker')
+
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
     id: 'mobile-nav-toggle',
@@ -57,7 +78,9 @@ export function apply(ctx: ClientContext): void {
   }, MobileNavOverlay))
 
   // Session log download, relocated from the session header to the drawer
-  // footer on mobile (the header capsule is hidden by CSS).
+  // footer on mobile (the header capsule is hidden by CSS); the drawer
+  // footer also hosts the Files action that opens the dsh-web-ui explorer
+  // sheet.
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
     name: 'sidebar.footer.action',
     id: 'mobile-nav-session-log',
@@ -65,6 +88,7 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: () => ({
       downloadSessionLog: (sessionId: string) => ctx.sessionLogDownload.download(sessionId),
+      toggleSidebar: () => ctx.layout.toggleSidebar(),
     }),
   }, MobileDrawerFooter))
 }

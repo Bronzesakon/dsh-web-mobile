@@ -39,8 +39,15 @@ export const MOBILE_CSS = `
   outline-offset: 1px;
 }
 
-/* Drawer footer: relocated Session log download. */
-[data-mobile-nav="session-log"] {
+/* Drawer footer actions: the relocated Session log download plus the Files
+   action that opens the dsh-web-ui explorer sheet. */
+[data-mobile-nav="drawer-actions"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-mobile-nav="session-log"],
+[data-mobile-nav="explorer"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +64,8 @@ export const MOBILE_CSS = `
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-[data-mobile-nav="session-log"]:hover:not(:disabled) {
+[data-mobile-nav="session-log"]:hover:not(:disabled),
+[data-mobile-nav="explorer"]:hover {
   background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
 }
 [data-mobile-nav="session-log"]:disabled {
@@ -361,6 +369,194 @@ export const MOBILE_CSS = `
   [aria-modal="true"]:has(> :first-child > :last-child > button) > :last-child > :last-child {
     padding: 0 12px 24px !important;
   }
+
+  /* ---------- dsh-web-ui family compatibility ----------
+     The linxin666 plugin suite extends the shell frame directly:
+       - aionui-panel appends two trailing grid columns (explorer / preview)
+         plus absolute drag handles to [data-dsh-frame]; its 5-track inline
+         grid is already overridden above, but the handles and columns would
+         still float over the main UI. On mobile the columns leave the grid
+         (fixed, full-screen sheets) and keep their own visibility state —
+         the suite's floating expand button / preview tabs open them, so no
+         feature is lost. The task-board / ssh plugins inject sidebar entries
+         and center-column takeover panels; the entries need spacing and the
+         kanban needs scrollable columns. */
+
+  /* Touch devices: the drag handles are useless — the floating expand
+     button is the opener. */
+  .aionui-explorer-handle,
+  .aionui-preview-handle {
+    display: none !important;
+  }
+
+  /* Explorer / preview columns become full-screen sheets. The explorer is
+     gated shut by default (its own persisted expanded state must never
+     cover the mobile UI on load); the drawer's Files action opens it via
+     the frame marker below, and the sheet's own collapse chevron clears it.
+     Preview stays owned by the suite (hidden while no tab is open). */
+  [data-aionui-explorer-col],
+  [data-aionui-preview-col] {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 55 !important;
+    background: var(--aion-bg-base, #ffffff) !important;
+    border-left: none !important;
+  }
+  [data-aionui-explorer-col] {
+    visibility: hidden !important;
+  }
+  [data-aionui-preview-col] {
+    z-index: 56 !important;
+  }
+  /* The Files action opens the explorer sheet (frame marker). */
+  [data-mobile-nav="frame"][data-aionui-explorer-open] [data-aionui-explorer-col] {
+    visibility: visible !important;
+  }
+  /* The open drawer must never sit under a sheet: while the frame is in the
+     narrow-expanded state both sheets yield (later in the file than the
+     open marker rule, so it wins at equal specificity). */
+  [data-mobile-nav="frame"]:not([data-sidebar-collapsed]) [data-aionui-explorer-col],
+  [data-mobile-nav="frame"]:not([data-sidebar-collapsed]) [data-aionui-preview-col] {
+    visibility: hidden !important;
+  }
+  /* The suite's own expand button reads the store state we bypass on
+     mobile — hide it; the drawer's Files action is the opener. */
+  .aionui-floating-expand {
+    display: none !important;
+  }
+
+  /* dsh-web-ui sidebar entries (task board / ssh) sit flush against each
+     other — give the injected rows breathing room. */
+  button[data-dsh-taskboard-entry],
+  button[data-dsh-ssh-entry] {
+    margin-bottom: 8px !important;
+  }
+
+  /* Task board: five kanban columns at minmax(0,1fr) crush into ~78px phone
+     strips. Give every column a usable minimum and let the row scroll. */
+  [data-dsh-taskboard-board] > [class$="_columns"] {
+    grid-template-columns: repeat(5, minmax(240px, 1fr)) !important;
+    overflow-x: auto !important;
+  }
+  /* The floating button must not float over a takeover panel (task board /
+     ssh own the center column while active). */
+  html[data-dsh-taskboard-active] [data-mobile-nav="fab"],
+  html[data-dsh-ssh-active] [data-mobile-nav="fab"],
+  html[data-dsh-taskboard-active] [data-mobile-nav="backdrop"],
+  html[data-dsh-ssh-active] [data-mobile-nav="backdrop"] {
+    display: none !important;
+  }
+  /* Board header: let the search field take the slack instead of squeezing
+     the action buttons. */
+  [data-dsh-taskboard-board] > [class$="_boardHeader"] [class$="_search"] {
+    flex: 1 1 auto !important;
+    min-width: 80px !important;
+  }
+
+  /* ---------- dsh-web-ui polish: settings sheet ----------
+     The official dialog is a desktop two-column form; on a phone the
+     label/control split leaves a huge dead gap and long descriptions wrap
+     into tall stacks. Stack each row (text above, control full-width) and
+     compact the nav tabs into an even wrap. */
+
+  /* Nav tabs: a stable 3-per-row grid (two clean rows instead of a ragged
+     wrap) with tighter cells. */
+  [aria-modal="true"]:has(> :first-child > :last-child > button) > :first-child > :last-child {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+  [aria-modal="true"] [class$="_navCell"] {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    justify-content: flex-start !important;
+  }
+  [aria-modal="true"] [class$="_navCell"] svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex: none !important;
+  }
+  /* Setting rows: text on top, control below at full width. */
+  [aria-modal="true"] [class$="_section"] [class$="_row"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  [aria-modal="true"] [class$="_section"] [class$="_row"] > :first-child {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  [aria-modal="true"] [class$="_section"] [class$="_row"] > :last-child {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  /* Appearance mode group: give the cube row a consistent bordered
+     segmented look (the official borders differ per state). */
+  [aria-modal="true"] [class$="_cubeRow"] > * {
+    border: 1px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .12)) !important;
+  }
+
+  /* ---------- dsh-web-ui polish: explorer sheet ----------
+     The aionui explorer was designed for a desktop side column: compact the
+     header, search box and tree rows so a phone shows more entries, and pad
+     the scroll bottom so the last row never sits flush on the edge. */
+
+  [data-aionui-explorer-col] [class$="_tabBar"] {
+    height: 36px !important;
+  }
+  [data-aionui-explorer-col] [class$="_tabBtn"],
+  [data-aionui-explorer-col] [class$="_tabBtnActive"] {
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+  [data-aionui-explorer-col] [class$="_searchBox"] {
+    height: 32px !important;
+    font-size: 13px !important;
+  }
+  [data-aionui-explorer-col] [class$="_treeRow"] {
+    height: 30px !important;
+    font-size: 13px !important;
+  }
+  [data-aionui-explorer-col] [class$="_treeRow"] svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  [data-aionui-explorer-col] [class$="_scrollArea"] {
+    padding-bottom: 28px !important;
+  }
+
+  /* ---------- dsh-web-ui polish: drawer footer ----------
+     The injected footer actions (Files + Session log) become two equal pill
+     buttons instead of text-width capsules. */
+
+  [data-mobile-nav="drawer-actions"] {
+    width: 100% !important;
+  }
+  [data-mobile-nav="drawer-actions"] > button {
+    flex: 1 1 0 !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* ---------- dsh-web-ui polish: live-stats line ----------
+     The generation-throughput row (turns / steps / LLM time) renders as one
+     nowrap line inside the composer stack and clips on phones. Let it wrap,
+     but wrap whole metric groups: each group becomes an inline-block so
+     "Tool call 136m1s" never splits mid-phrase. Bottom padding keeps the
+     last line clear of the gesture bar. */
+
+  [data-phase] [class$="_composerStack"] [class$="_root"] {
+    white-space: normal !important;
+    padding-bottom: env(safe-area-inset-bottom, 12px) !important;
+  }
+  [data-phase] [class$="_composerStack"] [class$="_root"] > * {
+    display: inline-block !important;
+    white-space: nowrap !important;
+  }
 }
 
 /* ---------- desktop: the mobile controls must never appear ---------- */
@@ -369,7 +565,9 @@ export const MOBILE_CSS = `
   [data-mobile-nav="toggle"],
   [data-mobile-nav="fab"],
   [data-mobile-nav="backdrop"],
-  [data-mobile-nav="session-log"] {
+  [data-mobile-nav="session-log"],
+  [data-mobile-nav="explorer"],
+  [data-mobile-nav="drawer-actions"] {
     display: none !important;
   }
 }

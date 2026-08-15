@@ -8,6 +8,7 @@ export const zh = {
   'close': '收起目录',
   'backdrop': '点击关闭目录',
   'sessionLog': '导出会话日志',
+  'files': '文件浏览',
 } as const
 
 /** English dictionary, key-identical to the Chinese source of truth. */
@@ -16,6 +17,7 @@ export const en: Record<MobileNavKey, string> = {
   'close': 'Close directory',
   'backdrop': 'Click to close directory',
   'sessionLog': 'Session log',
+  'files': 'Files',
 }
 
 /** Key domain of the `mobileNav` namespace (zh is the source of truth). */

@@ -94,6 +94,35 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     return () => document.removeEventListener('keydown', onKeyDown, true)
   }, [mobile, open, toggleSidebar])
 
+  // Navigation inside the drawer closes it: tapping a session row or a
+  // plugin takeover entry (task board / ssh) must hand the screen to the
+  // content it just opened. Capture phase — the drawer closes before the
+  // shell or a plugin processes the click, so takeover panels never render
+  // under the open drawer.
+  //
+  // Deliberately NOT closed by this rule:
+  // - Settings / Session log: their dialogs render INSIDE the drawer DOM
+  //   (portaled into the sidebar); closing the drawer would slide the dialog
+  //   off-screen with it.
+  // - Workspace folder chevrons, the logo: pure UI toggles, not navigation.
+  // - Anything while a modal dialog is open: the dialog owns the screen.
+  useEffect(() => {
+    if (!mobile || !open) return
+    const onDrawerClick = (event: MouseEvent) => {
+      if (document.querySelector('[aria-modal="true"]') !== null) return
+      const target = event.target as HTMLElement | null
+      if (target === null) return
+      const drawer = document.querySelector<HTMLElement>('[data-mobile-nav="frame"] > :first-child')
+      if (drawer === null || !drawer.contains(target)) return
+      const navigates = target.closest(
+        'button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry], [class*="newSession"], [class*="sessionRow"], [class*="searchResultRow"], [class*="searchResultWorkspace"]',
+      )
+      if (navigates !== null) toggleSidebar()
+    }
+    document.addEventListener('click', onDrawerClick, true)
+    return () => document.removeEventListener('click', onDrawerClick, true)
+  }, [mobile, open, toggleSidebar])
+
   if (!mobile) return null
   return (
     <>
