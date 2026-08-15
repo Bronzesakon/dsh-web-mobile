@@ -8,9 +8,10 @@ export interface MobileNavToggleProps extends PropsRuntime<'conversation.session
 /**
  * Mobile-only icon buttons next to the session title:
  * - toggle: opens the directory drawer on narrow screens.
- * - files: opens the dsh-web-ui explorer sheet directly — one tap, no
- *   drawer round-trip. (The drawer footer keeps a Files entry for the
- *   hero/blank phases where this header does not exist.)
+ * - files: toggles the dsh-web-ui explorer sheet directly — one tap opens,
+ *   a second tap closes it, no drawer round-trip. (The drawer footer keeps
+ *   a Files entry for the hero/blank phases where this header does not
+ *   exist.)
  * Hidden entirely on wide screens (CSS media query).
  */
 export declare function MobileNavToggle({ toggleSidebar, t }: MobileNavToggleProps): import("react").JSX.Element;

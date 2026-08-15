@@ -1,5 +1,4 @@
 /** `mobileNav` namespace dictionaries: drawer controls. */
-/** Dictionary namespace owned by this plugin. */
 export declare const NS = "mobileNav";
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export declare const zh: {

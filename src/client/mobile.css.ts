@@ -286,9 +286,8 @@ export const MOBILE_CSS = `
   [data-phase] header > :first-child {
     padding-left: 20px !important;
   }
-  /* The directory toggle and the one-tap Files action sit at the far left
-     of the header (the header is position:relative; the data-slot wrappers
-     are display:contents). */
+  /* The directory toggle sits at the far left of the header (the header
+     is position:relative; the data-slot wrappers are display:contents). */
   [data-mobile-nav="toggle"] {
     position: absolute !important;
     left: 8px !important;
@@ -432,11 +431,11 @@ export const MOBILE_CSS = `
          plus absolute drag handles to [data-dsh-frame]; its 5-track inline
          grid is already overridden above, but the handles and columns would
          still float over the main UI. On mobile the columns leave the grid
-         (fixed, full-screen sheets) and keep their own visibility state —
-         the suite's floating expand button / preview tabs open them, so no
-         feature is lost. The task-board / ssh plugins inject sidebar entries
-         and center-column takeover panels; the entries need spacing and the
-         kanban needs scrollable columns. */
+         as floating bottom sheets and keep their own visibility state —
+         the suite's collapse chevron / preview tabs still work, so no
+         feature is lost. The task-board / ssh plugins inject sidebar
+         entries and center-column takeover panels; the entries need
+         spacing and the kanban needs scrollable columns. */
 
   /* Touch devices: the drag handles are useless — the floating expand
      button is the opener. */
@@ -445,40 +444,32 @@ export const MOBILE_CSS = `
     display: none !important;
   }
 
-  /* Explorer / preview columns become full-screen sheets. The explorer is
-     gated shut by default (its own persisted expanded state must never
-     cover the mobile UI on load); the drawer's Files action opens it via
-     the frame marker below, and the sheet's own collapse chevron clears it.
-     Preview stays owned by the suite (hidden while no tab is open). */
+  /* Shared base: both columns leave the grid as floating panels. The
+     explorer is gated shut by default (its own persisted expanded state
+     must never cover the mobile UI on load); the header Files action opens
+     it via the frame marker below, and the sheet's own collapse chevron
+     clears it. Preview stays owned by the suite (hidden while no tab is
+     open). The per-column rules below override the geometry. */
   [data-aionui-explorer-col],
   [data-aionui-preview-col] {
     position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
     z-index: 55 !important;
     background: var(--aion-bg-base, #ffffff) !important;
     border-left: none !important;
   }
+  /* Explorer (file tree) bottom sheet: bottom edge aligned exactly with
+     the composer card's bottom line — the card sits 36px above the
+     viewport bottom (8px composer padding + the 28px stats strip below
+     the card), so the sheet uses the same 36px bottom offset. */
   [data-aionui-explorer-col] {
     visibility: hidden !important;
-  }
-  /* The explorer (file tree) opens as a bottom sheet like the preview
-     panel: anchored to the bottom edge at a fraction of the viewport
-     height, so the conversation stays visible above it. */
-  [data-aionui-explorer-col] {
     left: 8px !important;
     right: 8px !important;
     top: auto !important;
-    /* Align the sheet's bottom edge exactly with the bottom line of the
-       composer card: the card sits 36px above the viewport bottom (8px
-       composer padding + the 28px stats strip below the card), so the
-       sheet uses the same 36px bottom offset. */
     bottom: 36px !important;
     width: auto !important;
     height: min(55dvh, 460px) !important;
-    max-height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 44px) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
@@ -511,7 +502,7 @@ export const MOBILE_CSS = `
     visibility: hidden !important;
   }
   /* The suite's own expand button reads the store state we bypass on
-     mobile — hide it; the drawer's Files action is the opener. */
+     mobile — hide it; the header Files action is the opener. */
   .aionui-floating-expand {
     display: none !important;
   }
@@ -634,9 +625,9 @@ export const MOBILE_CSS = `
      The official session-status row (turns / steps / LLM time / TTFT /
      cache) is long. The client marks the exact row with
      [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
-     targeted). Plan: ONE compact line that scrolls horizontally — every
-     metric stays reachable by swiping, the row never grows vertically.
-     Hard clip at the edge (no ellipsis element, no fade), 24px gaps
+     targeted). Layout: ONE fixed-height (28px) flex strip that scrolls
+     horizontally — the full metrics stream stays reachable by swiping,
+     the row never grows vertically, no ellipsis or fade, 12px gaps
      between metric groups, a 2px scrollbar as the swipe affordance. */
 
   [data-mobile-nav="stats"] {

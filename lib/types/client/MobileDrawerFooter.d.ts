@@ -10,9 +10,9 @@ export interface MobileDrawerFooterProps extends PropsRuntime<'sidebar.footer.ac
 /**
  * Mobile-only drawer footer actions, relocated from the session header to the
  * drawer footer (beside Settings):
- * - Files: opens the dsh-web-ui aionui explorer as a full-screen sheet (the
- *   explorer column is hidden on mobile until this marker is set, so the
- *   suite's own persisted-expanded state can never cover the UI on load).
+ * - Files: opens the dsh-web-ui aionui explorer as a floating bottom sheet
+ *   (the explorer column is hidden on mobile until this marker is set, so
+ *   the suite's own persisted-expanded state can never cover the UI on load).
  * - Session log: the official session-log-export controller, so the
  *   progress/result dialog is shared with the desktop flow.
  * Hidden entirely on wide screens (CSS media query).

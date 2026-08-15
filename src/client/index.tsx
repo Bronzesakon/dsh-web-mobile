@@ -37,14 +37,15 @@ export function apply(ctx: ClientContext): void {
   }, 'dsh-mobile-nav: styles')
 
   // dsh-web-ui compatibility: the aionui explorer column would render as a
-  // full-screen sheet over the whole mobile UI whenever its (persisted)
-  // expanded state is active — including right after a reload, with no way
-  // out (the suite's floating expand button only exists while collapsed).
-  // Instead of fighting the suite's store timing, the mobile stylesheet keeps
-  // the explorer column hidden by default and the drawer's Files action
-  // opens it via the `data-aionui-explorer-open` marker on the frame. This
-  // effect just clears that marker when the sheet's own collapse chevron is
-  // tapped, so closing is symmetric with opening.
+  // sheet over the whole mobile UI whenever its (persisted) expanded state
+  // is active — including right after a reload, with no way out (the
+  // suite's floating expand button only exists while collapsed). Instead
+  // of fighting the suite's store timing, the mobile stylesheet keeps the
+  // explorer column hidden by default and the header's Files action (plus
+  // the drawer footer entry) opens it via the `data-aionui-explorer-open`
+  // marker on the frame. This effect just clears that marker when the
+  // sheet's own collapse chevron is tapped, so closing is symmetric with
+  // opening.
   ctx.effect(() => {
     const narrow = window.matchMedia('(max-width: 1023px)')
     if (!narrow.matches) return () => {}
@@ -117,7 +118,9 @@ export function apply(ctx: ClientContext): void {
       }
     }
     const observer = new MutationObserver(check)
-    observer.observe(document.body, { attributes: true, subtree: true })
+    // Visibility flips come through inline style mutations (suite) or the
+    // explorer-open marker on the frame; class changes are watched too.
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class', 'data-aionui-explorer-open'] })
     check()
     return () => {
       observer.disconnect()
