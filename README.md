@@ -27,22 +27,10 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 - **文件树 / 预览浮层**:dsh-web-ui 的 Explorer 与 Preview 在手机上变为圆角底部浮层(文件树底部与输入框对齐),每次打开带滑入动画;
 - **一步打开文件**:会话头部右侧新增文件夹按钮,点击直接开/关文件树,无需先开侧栏抽屉。
 
-## 已兼容插件
+## 兼容插件
 
- [dsh-web-ui](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)
-
-| 插件 | 移动端适配 |
-| --- | --- |
-| 文件树 (Explorer) | 圆角底部浮层,底边与输入框对齐;会话头部文件夹按钮一步开/关 |
-| 预览 (Preview) | 底部浮层;刷新/重进不会自动弹出 |
-| 任务看板 | 五列保持最小宽度,横向滚动;浮动按钮让位 |
-| SSH | 面板适配;侧栏入口间距 |
-| 宠物 (鲸鱼娘) | 手机端缩小,默认停在输入框上方,可拖动,不遮挡输入与统计;设置弹窗打开时隐藏 |
-| 插件市场 (Plugin Market) | 标签行换行,搜索框独占一行全宽,不再溢出屏幕右缘 |
-| 用量与余额 (dsh-usage-stats) | 三个统计大块竖排全宽,数字不再截断/横向溢出;Usage badge 紧贴设置按钮上方 |
-| 会话统计行 | turns/steps/LLM/TTFT/cache/TPS 整合为一条固定高度横向滚动条 |
-| 远程配对 (remote-web-ui) | footer 图标与 Files/Session log 分行排列 |
-| web-ui 设置 | 插件项卡片、设置条目在手机上重排 |
+- [dsh-web-ui 全家桶](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)(文件树 / 预览 / 任务看板 / SSH / 宠物 / 插件市场 / 会话统计 / 远程配对 / 设置)——**0.1.14**
+- dsh-usage-stats(用量与余额)——**0.1.2**
 
 ## 安装
 
