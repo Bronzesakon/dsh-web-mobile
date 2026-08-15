@@ -546,30 +546,48 @@ export const MOBILE_CSS = `
      The official session-status row (turns / steps / LLM time / TTFT /
      cache) is long. The client marks the exact row with
      [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
-     targeted). Plan: EVERY metric stays visible with no scrolling — metric
-     groups (each a standalone span) wrap as whole units at a tight
-     line-height and smaller size, decorative pipes are hidden, and the
-     group gap replaces them. Reads as ~3 compact lines instead of one
-     clipped line or a tall loose stack. */
+     targeted). Plan: ONE 20px line that scrolls horizontally — the row
+     never grows vertically, every metric is reachable by swiping, and a
+     visible thin scrollbar signals that more content is to the right. No
+     fade mask: a hard clip at the edge reads as "scrollable", not
+     "truncated". */
 
   [data-mobile-nav="stats"] {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: baseline !important;
-    column-gap: 12px !important;
-    row-gap: 0 !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--dsw-alias-border-l1, rgba(0, 0, 0, .25)) transparent !important;
     padding-bottom: env(safe-area-inset-bottom, 8px) !important;
-    line-height: 16px !important;
+    line-height: 18px !important;
     font-size: 12px !important;
+  }
+  [data-mobile-nav="stats"]::-webkit-scrollbar {
+    height: 4px !important;
+  }
+  [data-mobile-nav="stats"]::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .32)) !important;
+    border-radius: 4px !important;
+  }
+  [data-mobile-nav="stats"]::-webkit-scrollbar-track {
+    background: transparent !important;
   }
   [data-mobile-nav="stats"] > * {
     display: inline-block !important;
     white-space: nowrap !important;
   }
-  [data-mobile-nav="stats-pipe"] {
-    display: none !important;
+  /* The "more" hint: sticky at the right edge of the scrolling row while
+     content is clipped; hides at the end; tap jumps to the end. Its
+     background matches the page so it reads as a fold marker, not a fade. */
+  [data-mobile-nav="stats-more"] {
+    position: sticky !important;
+    right: 0 !important;
+    background: var(--dsw-alias-bg-base, #ffffff) !important;
+    padding-left: 8px !important;
+    color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45)) !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
   }
 
   /* ---------- hero composer on mobile ----------

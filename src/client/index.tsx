@@ -61,30 +61,52 @@ export function apply(ctx: ClientContext): void {
   // cache) has a hashed class, so the stylesheet cannot target it directly.
   // Mark the exact row on narrow screens by text: a [class$=_root] that
   // carries the metrics text and no textarea (the composer card also ends in
-  // _root and can mention turns in its model line). The marker lets the CSS
-  // lay the row out compactly with every metric visible. The decorative
-  // pipes get their own marker so the CSS can hide them.
+  // _root and can mention turns in its model line). The CSS lays the marked
+  // row out as ONE horizontally scrolling line; a "more" hint (⋯) sits
+  // sticky at the right edge, hides once the row is scrolled to the end, and
+  // jumps to the end on tap. The observer heals the hint if the official
+  // React tree re-renders and drops it.
   ctx.effect(() => {
     const narrow = window.matchMedia('(max-width: 1023px)')
     if (!narrow.matches) return () => {}
-    let marked = false
+
+    const ensureMoreHint = (root: HTMLElement): void => {
+      let hint = root.querySelector<HTMLElement>('[data-mobile-nav="stats-more"]')
+      if (hint === null) {
+        hint = document.createElement('span')
+        hint.setAttribute('data-mobile-nav', 'stats-more')
+        hint.textContent = '⋯'
+        hint.addEventListener('click', () => {
+          root.scrollTo({ left: root.scrollWidth, behavior: 'smooth' })
+        })
+        root.appendChild(hint)
+      }
+      const update = (): void => {
+        const scrollable = root.scrollWidth > root.clientWidth + 2
+        const atEnd = root.scrollLeft + root.clientWidth >= root.scrollWidth - 2
+        // visibility (not display): the row's child rule pins display with
+        // !important, which would defeat a JS display flip.
+        hint.style.visibility = scrollable && !atEnd ? 'visible' : 'hidden'
+      }
+      root.addEventListener('scroll', update)
+      update()
+    }
+
     const mark = (): void => {
-      if (marked) return
       for (const root of document.querySelectorAll('[data-phase] [class$="_root"]')) {
         const text = root.textContent ?? ''
         if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
         if (root.querySelector('textarea') !== null) continue
         root.setAttribute('data-mobile-nav', 'stats')
-        for (const span of root.querySelectorAll('span')) {
-          if ((span.textContent ?? '').trim() === '|') {
-            span.setAttribute('data-mobile-nav', 'stats-pipe')
-          }
-        }
-        marked = true
+        ensureMoreHint(root as HTMLElement)
         return
       }
     }
-    const observer = new MutationObserver(mark)
+    const observer = new MutationObserver(() => {
+      const stats = document.querySelector<HTMLElement>('[data-mobile-nav="stats"]')
+      if (stats !== null) ensureMoreHint(stats)
+      else mark()
+    })
     observer.observe(document.body, { childList: true, subtree: true })
     mark()
     return () => {
