@@ -1,8 +1,8 @@
 # dsh-web-mobile
 
-DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录变为 overlay 抽屉,会话区独占全宽。纯 client 插件,宽屏下与未安装时一致。
+DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录变为 overlay 抽屉,会话区独占全宽;768–1023px 平板/宽幅移动端对弹窗与浮层做限宽居中;桌面端(≥1024px)保持与未安装时一致。纯 client 插件。
 
-[![Release v0.1.9](https://img.shields.io/badge/release-v0.1.9-5B4CF0?style=flat-square)](package.json)
+[![Release v0.2.0](https://img.shields.io/badge/release-v0.2.0-5B4CF0?style=flat-square)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0B7285?style=flat-square)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Web%20Profile-5B4CF0?style=flat-square)](cordis.patch.yml)
 
@@ -23,10 +23,12 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 - **Markdown 表格**:移动端表格不再 `max-content` 收缩,改为撑满消息列宽,减少表格内/右侧留白;
 - **用户消息气泡**:移动端改为自适应宽度——短消息紧凑靠右,长消息可撑满消息列宽,避免短消息占太大面积;
 - **输入框防重叠**:agent 权限胶囊(盾牌)与模型名不再重叠;
+- **模型选择器**:底部模型名可展开完整显示;切换菜单在触发按钮上方水平居中,避免小屏下偏左/溢出;
+- **底部控件间距**:权限、模型选择、上下文小圈间距调整为 12/10/12,布局更均衡;
 - **统计栏一行滚动**:轮数/步数/耗时/TTFT/缓存/token 全部收进一条固定高度(28px)的横向滚动条,底部不再被撑高;
 - **会话行操作菜单**:长按或右键会话行,右侧出现三点按钮(重命名 / Fork / 归档),点击时抽屉保持打开,菜单不再随抽屉收回;
 - **抽屉导航判定**:点会话行本体切换会话并收起抽屉;行内按钮(三点菜单等)不触发收起;
-- **文件树 / 预览浮层**:dsh-web-ui 的 Explorer 与 Preview 在手机上变为圆角底部浮层(文件树底部与输入框对齐),每次打开带滑入动画;
+- **文件树 / 预览浮层**:dsh-web-ui 的 Explorer 与 Preview 在手机上变为圆角底部浮层(文件树底部与输入框对齐),每次打开带滑入动画;预览浮层右上角缩放/收起按钮可正常关闭;
 - **平板 / 宽幅移动端**:768–1023px 下设置弹窗与 Explorer/Preview 浮层不再铺满全宽,改为限宽居中,避免右侧大块空白;
 - **一步打开文件**:会话头部右侧新增文件夹按钮,点击直接开/关文件树,无需先开侧栏抽屉。
 
