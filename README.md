@@ -60,7 +60,7 @@ DSH 插件通过 `dsh plugin` 命令安装进 **profile**(`dsh web` 对应 `web`
 ### 方式一:从 GitHub 安装(推荐,一条命令)
 
 ```sh
-dsh plugin --profile web add github:<owner>/<repo>
+dsh plugin --profile web add github:mexiaosqwq/dsh-web-mobile
 ```
 
 - 仓库**自带构建产物**(`lib/`),无 `prepare` 脚本——安装不执行任何第三方代码,不受 pnpm ≥10 的 `allowBuilds` 拦截,无需修改任何配置;
