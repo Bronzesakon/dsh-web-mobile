@@ -29,7 +29,8 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 
 ## 兼容插件
 
-- [dsh-web-ui 全家桶](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)(文件树 / 预览 / 任务看板 / SSH / 宠物 / 插件市场 / 会话统计 / 远程配对 / 设置)——**0.1.14**
+- [dsh-web-ui 全家桶](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)(文件树 / 预览 / 任务看板 / SSH / 宠物 / 会话统计 / 远程配对 / 设置)——**0.1.14**
+- dshmarket(插件市场,搜索框换行全宽)——**1.2.2**
 - dsh-usage-stats(用量与余额)——**0.1.2**
 
 ## 安装
