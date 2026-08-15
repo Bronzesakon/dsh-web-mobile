@@ -16,7 +16,8 @@
 export const MOBILE_CSS = `
 /* ---------- base control styles (rendered at any width, hidden where unused) ---------- */
 
-[data-mobile-nav="toggle"] {
+[data-mobile-nav="toggle"],
+[data-mobile-nav="files"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -31,10 +32,12 @@ export const MOBILE_CSS = `
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-[data-mobile-nav="toggle"]:hover {
+[data-mobile-nav="toggle"]:hover,
+[data-mobile-nav="files"]:hover {
   background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
 }
-[data-mobile-nav="toggle"]:focus-visible {
+[data-mobile-nav="toggle"]:focus-visible,
+[data-mobile-nav="files"]:focus-visible {
   outline: 2px solid var(--dsw-alias-state-business-primary, #4f6ef7);
   outline-offset: 1px;
 }
@@ -283,11 +286,18 @@ export const MOBILE_CSS = `
   [data-phase] header > :first-child {
     padding-left: 20px !important;
   }
-  /* The directory toggle sits at the far left of the header (the header is
-     position:relative; the data-slot wrappers are display:contents). */
+  /* The directory toggle and the one-tap Files action sit at the far left
+     of the header (the header is position:relative; the data-slot wrappers
+     are display:contents). */
   [data-mobile-nav="toggle"] {
     position: absolute !important;
     left: 8px !important;
+    top: 12px !important;
+    z-index: 2 !important;
+  }
+  [data-mobile-nav="files"] {
+    position: absolute !important;
+    left: 40px !important;
     top: 12px !important;
     z-index: 2 !important;
   }
@@ -710,6 +720,7 @@ export const MOBILE_CSS = `
 
 @media (min-width: 1024px) {
   [data-mobile-nav="toggle"],
+  [data-mobile-nav="files"],
   [data-mobile-nav="fab"],
   [data-mobile-nav="backdrop"],
   [data-mobile-nav="session-log"],
