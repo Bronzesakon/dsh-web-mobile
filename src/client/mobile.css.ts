@@ -323,6 +323,19 @@ export const MOBILE_CSS = `
     gap: 12px !important;
     min-width: 0 !important;
   }
+  /* Let the model selector take the free space in the trailing group so the
+     model name is not squeezed/truncated; the context meter stays fixed. */
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]:not([aria-haspopup="menu"])) {
+    flex: 0 0 auto !important;
+  }
 
   /* Model switcher menu: the official dropdown is right-aligned to the
      trigger (right:0). The model pill sits near the center of the composer,
