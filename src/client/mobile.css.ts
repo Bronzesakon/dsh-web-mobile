@@ -296,7 +296,7 @@ export const MOBILE_CSS = `
   [data-phase] [class$="_userStack"],
   [data-phase] [class$="_userStack"] [class$="_bubble"] {
     box-sizing: border-box !important;
-    width: 100% !important;
+    width: fit-content !important;
     max-width: 100% !important;
   }
 
