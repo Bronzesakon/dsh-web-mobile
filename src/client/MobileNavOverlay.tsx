@@ -114,6 +114,11 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
       if (target === null) return
       const drawer = document.querySelector<HTMLElement>('[data-mobile-nav="frame"] > :first-child')
       if (drawer === null || !drawer.contains(target)) return
+      // A session row's own action buttons — the "Session actions" kebab
+      // (delete / rename), revealed on hover / long-press — open an edit
+      // menu. Tapping one must NOT count as tapping the row, or the drawer
+      // would close and take the just-opened menu with it.
+      if (target.closest('[class*="sessionRow"] button') !== null) return
       const navigates = target.closest(
         'button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry], [class*="newSession"], [class*="sessionRow"], [class*="searchResultRow"], [class*="searchResultWorkspace"]',
       )
