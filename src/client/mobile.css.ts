@@ -631,6 +631,20 @@ export const MOBILE_CSS = `
     white-space: nowrap !important;
   }
 
+  /* ---------- dsh-web-ui polish: floating pet ----------
+     The whale-girl pet (dsh-pet) floats at the viewport corner with a
+     persisted position; on a phone the default corner sits right on the
+     full-width composer. Pin it just above the input card (bottom 162px
+     clears the composer top at 694/844) and shrink it a notch. Desktop
+     keeps the official drag + persist behavior untouched. */
+
+  body > [class$="_float"]:has([class$="_sprite"][role="button"]) {
+    right: 8px !important;
+    bottom: 160px !important;
+    transform: scale(.66);
+    transform-origin: bottom right;
+  }
+
   /* ---------- dsh-web-ui polish: conversation stats line ----------
      The official session-status row (turns / steps / LLM time / TTFT /
      cache) is long. The client marks the exact row with
