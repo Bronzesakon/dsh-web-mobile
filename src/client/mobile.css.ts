@@ -552,13 +552,24 @@ export const MOBILE_CSS = `
      between metric groups, a 2px scrollbar as the swipe affordance. */
 
   [data-mobile-nav="stats"] {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    box-sizing: border-box !important;
     white-space: nowrap !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     scrollbar-width: thin !important;
     scrollbar-color: var(--dsw-alias-border-l1, rgba(0, 0, 0, .28)) transparent !important;
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+    padding: 0 0 4px !important;
     line-height: 20px !important;
     font-size: 12px !important;
   }
@@ -573,12 +584,21 @@ export const MOBILE_CSS = `
     background: transparent !important;
   }
   [data-mobile-nav="stats"] > * {
-    display: inline-block !important;
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    width: max-content !important;
+    min-width: max-content !important;
+    max-width: none !important;
     white-space: nowrap !important;
-    margin-right: 24px !important;
+    margin-right: 12px !important;
   }
   [data-mobile-nav="stats"] > *:last-child {
     margin-right: 0 !important;
+  }
+  [data-mobile-nav="stats"] * {
+    white-space: nowrap !important;
   }
 
   /* ---------- hero composer on mobile ----------
