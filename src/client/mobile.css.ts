@@ -289,6 +289,19 @@ export const MOBILE_CSS = `
     min-width: 0 !important;
   }
 
+  /* User bubbles: the official stack is capped at min(525px, 82%), which on a
+     phone leaves a large blank strip on the left and pushes the bubble high.
+     On mobile let the user message fill the same full width as assistant
+     messages (the bubble background then spans the whole message column). */
+  [data-phase] [class$="_userStack"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  [data-phase] [class$="_userStack"] [class$="_bubble"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   /* --- Composer bottom row on mobile ---
      The official row gives the model pill (trailing) flex:0 0 auto, which
      squeezes the agent-permission pill (modes) down to 15px: the pill's
