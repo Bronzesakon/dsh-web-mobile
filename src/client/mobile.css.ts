@@ -299,6 +299,12 @@ export const MOBILE_CSS = `
     width: 100% !important;
     max-width: 100% !important;
   }
+  /* Full-width user bubbles: shrink the left padding so the text starts closer
+     to the same column edge as assistant messages (still keeping a small
+     breathing room from the bubble's rounded corner). */
+  [data-phase] [class$="_userStack"] [class$="_bubble"] {
+    padding-left: 8px !important;
+  }
 
   /* --- Composer bottom row on mobile ---
      The official row gives the model pill (trailing) flex:0 0 auto, which
