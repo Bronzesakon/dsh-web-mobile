@@ -26,7 +26,7 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 
 ## 已兼容插件
 
-本插件专门兼容 [dsh-web-ui 全家桶](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)(`@linxin666/dsh-web-ui-all`,建议 0.1.14+),全家桶在手机上同样完整可用:
+ [dsh-web-ui](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)
 
 | 插件 | 移动端适配 |
 | --- | --- |
@@ -38,8 +38,6 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 | 会话统计行 | turns/steps/LLM/TTFT/cache/TPS 整合为一条固定高度横向滚动条 |
 | 远程配对 (remote-web-ui) | footer 图标与 Files/Session log 分行排列 |
 | web-ui 设置 | 插件项卡片、设置条目在手机上重排 |
-
-> 注:宠物、git-graph 分支 chip 等功能依赖全家桶 0.1.14+(该版本修复了与官方 slot 契约不兼容、宠物无法显示的问题)。
 
 ## 安装
 
