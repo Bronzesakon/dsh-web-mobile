@@ -67,9 +67,20 @@ pnpm build        # tsc host + tsc client + 内联打包 lib/client.js
 ## 安装
 
 ```sh
+# 本地开发 / 已有 checkout
 dsh plugin --profile web add link:/path/to/dsh-mobile-nav
-# 重启 profile 后生效;此后 client bundle 变更只需刷新页面
+
+# GitHub 分发(push 后,仓库含 prepare 构建脚本,产物由安装时构建)
+dsh plugin --profile web add github:<owner>/<repo>
 ```
+
+注意:
+
+- 插件的 `prepare` 脚本在安装时自动构建 `lib/`(产物不入库);
+- pnpm ≥10 默认拦截 Git 依赖的构建脚本:首次 `add` 会失败并打印
+  `allowBuilds` 所需的精确 key,把它加入
+  `profiles/<name>/pnpm-workspace.yaml` 后重跑 `add` 即可;
+- 安装后重启 profile 生效;此后 client bundle 变更只需刷新页面。
 
 ## 验证
 
