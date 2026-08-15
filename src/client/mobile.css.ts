@@ -593,6 +593,23 @@ export const MOBILE_CSS = `
     max-width: 100% !important;
   }
 
+  /* ---------- dsh-usage-stats polish: usage & balance panel ----------
+     The panel's stats row shows three token counters side by side
+     (today / month / total). The counters use tabular nowrap figures whose
+     min-content width overflows the ~336px panel body on a phone: figures
+     clip at the row's edges and the panel grows a horizontal scrollbar.
+     Stack the three counters vertically — full-width rows, so the figures
+     always fit. */
+
+  [class*="usg_"][class$="_statsRow"] {
+    flex-direction: column !important;
+  }
+  [class*="usg_"][class$="_stat"] {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
   /* ---------- dsh-web-ui polish: settings sheet ----------
      The official dialog is a desktop two-column form; on a phone the
      label/control split leaves a huge dead gap and long descriptions wrap
