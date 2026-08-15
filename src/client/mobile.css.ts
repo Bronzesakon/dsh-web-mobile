@@ -865,6 +865,14 @@ export const MOBILE_CSS = `
     margin-left: auto !important;
     margin-right: auto !important;
   }
+
+  /* Settings sections (e.g. Agent presets) often carry a desktop max-width
+     (720px) that leaves a dead strip on the right once the sheet is capped to
+     the same width; let them fill the sheet body instead. */
+  [aria-modal="true"] [class$="_section"] {
+    width: 100% !important;
+    max-width: none !important;
+  }
 }
 
 /* ---------- desktop: the mobile controls must never appear ---------- */
