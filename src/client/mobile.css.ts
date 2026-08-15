@@ -633,14 +633,12 @@ export const MOBILE_CSS = `
 
   /* ---------- dsh-web-ui polish: floating pet ----------
      The whale-girl pet (dsh-pet) floats at the viewport corner with a
-     persisted position; on a phone the default corner sits right on the
-     full-width composer. Pin it just above the input card (bottom 162px
-     clears the composer top at 694/844) and shrink it a notch. Desktop
-     keeps the official drag + persist behavior untouched. */
+     persisted, draggable position. On phones the pet is scaled down so
+     it does not dominate the screen; the plugin's own drag + persist
+     still work (the position itself is left alone — the mobile default
+     position is seeded via the pet API to just above the composer). */
 
   body > [class$="_float"]:has([class$="_sprite"][role="button"]) {
-    right: 8px !important;
-    bottom: 160px !important;
     transform: scale(.66);
     transform-origin: bottom right;
   }
@@ -696,6 +694,7 @@ export const MOBILE_CSS = `
     max-width: none !important;
     white-space: nowrap !important;
     margin-right: 12px !important;
+    padding: 0 !important;
   }
   [data-mobile-nav="stats"] > *:last-child {
     margin-right: 0 !important;

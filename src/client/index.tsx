@@ -101,6 +101,22 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const narrow = window.matchMedia('(max-width: 1023px)')
     if (!narrow.matches) return () => {}
+    // The composer root renders the TPS readout ("TPS 89.4 tok/s") as its
+    // own row BELOW the status strip; fold it into the strip so every
+    // metric scrolls together. The suite re-renders its own tree, so this
+    // must be idempotent and re-run on every mutation.
+    const moveTps = (stats: Element): void => {
+      if ([...stats.children].some((c) => /^TPS\s+\d/.test((c.textContent ?? '').trim()))) return
+      const stack = stats.closest('[class$="_composerStack"]')
+      if (stack === null) return
+      for (const el of stack.querySelectorAll('div')) {
+        const text = (el.textContent ?? '').trim()
+        if (!/^TPS\s+\d/.test(text)) continue
+        if (el.children.length > 0) continue
+        stats.appendChild(el)
+        return
+      }
+    }
     const mark = (): void => {
       for (const root of document.querySelectorAll('[data-phase] [class$="_root"]')) {
         // The status row lives inside the composer stack; message-area
@@ -110,6 +126,7 @@ export function apply(ctx: ClientContext): void {
         if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
         if (root.querySelector('textarea') !== null) continue
         root.setAttribute('data-mobile-nav', 'stats')
+        moveTps(root)
         return
       }
     }
