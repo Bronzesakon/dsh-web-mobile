@@ -575,6 +575,24 @@ export const MOBILE_CSS = `
     min-width: 80px !important;
   }
 
+  /* ---------- dsh-web-ui polish: plugin market search ----------
+     The market tab row (Discover / Themes / Installed + the plugin search
+     box) is a no-wrap flex: at 390px the tabs plus the ~218px search box
+     (~475px total) overflow the ~334px sheet and the search box runs off
+     the right edge of the screen (it also forces a horizontal scrollbar on
+     the sheet's options area). Let the row wrap: the tabs keep the first
+     line and the search box gets its own full-width second line. */
+
+  [aria-modal="true"] [class$="_tabs"] {
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+  }
+  [aria-modal="true"] [class$="_searchInline"] {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   /* ---------- dsh-web-ui polish: settings sheet ----------
      The official dialog is a desktop two-column form; on a phone the
      label/control split leaves a huge dead gap and long descriptions wrap
@@ -678,6 +696,12 @@ export const MOBILE_CSS = `
   body > [class$="_float"]:has([class$="_sprite"][role="button"]) {
     transform: scale(.66);
     transform-origin: bottom right;
+  }
+  /* While a modal dialog (settings sheet / export) owns the screen the pet
+     floats ABOVE it and covers the dialog content; modal semantics say the
+     background is inert, so hide the pet for the modal's lifetime. */
+  body:has([aria-modal="true"]) > [class$="_float"]:has([class$="_sprite"][role="button"]) {
+    display: none !important;
   }
 
   /* ---------- dsh-web-ui polish: conversation stats line ----------
