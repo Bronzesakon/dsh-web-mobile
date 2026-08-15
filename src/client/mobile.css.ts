@@ -438,20 +438,21 @@ export const MOBILE_CSS = `
   [data-aionui-explorer-col] {
     visibility: hidden !important;
   }
-  /* The explorer (file tree) sheet: inset card instead of a raw full-screen
-     takeover — rounded corners, 8px margins and a shadow read as a floating
-     panel and keep the app frame visible around it. */
+  /* The explorer (file tree) opens as a bottom sheet like the preview
+     panel: anchored to the bottom edge at a fraction of the viewport
+     height, so the conversation stays visible above it. */
   [data-aionui-explorer-col] {
     left: 8px !important;
     right: 8px !important;
-    top: 8px !important;
+    top: auto !important;
     bottom: 8px !important;
     width: auto !important;
-    height: auto !important;
+    height: min(55dvh, 460px) !important;
+    max-height: calc(100dvh - 16px) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
-    box-shadow: 0 4px 32px rgba(0, 0, 0, .2) !important;
-    animation: dsh-mobile-nav-sheet-in .22s var(--ds-ease-out, ease-in-out) !important;
+    box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
+    animation: dsh-mobile-nav-sheet-up .24s var(--ds-ease-out, ease-in-out) !important;
   }
   [data-aionui-preview-col] {
     position: fixed !important;
