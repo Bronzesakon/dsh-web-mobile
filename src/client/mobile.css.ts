@@ -275,6 +275,20 @@ export const MOBILE_CSS = `
     font-size: 15px !important;
   }
 
+  /* Markdown tables: the official table uses width:max-content, so on a phone
+     it hugs the content and leaves dead space beside/inside the table. Force
+     the table to fill the message column and let the table wrapper handle
+     overflow if a cell is genuinely too wide. */
+  [data-phase] table {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  [data-phase] th,
+  [data-phase] td {
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
   /* --- Composer bottom row on mobile ---
      The official row gives the model pill (trailing) flex:0 0 auto, which
      squeezes the agent-permission pill (modes) down to 15px: the pill's
