@@ -622,6 +622,13 @@ export const MOBILE_CSS = `
      The injected footer actions (Files + Session log) become two equal pill
      buttons instead of text-width capsules. */
 
+  /* The official footerActions row also hosts the remote-web-ui entry
+     row (two icon buttons); without wrapping the two groups squeeze each
+     other on one line. Wrap so each group gets its own full-width row. */
+  [data-mobile-nav="frame"] [class$="_footerActions"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
   [data-mobile-nav="drawer-actions"] {
     width: 100% !important;
   }
