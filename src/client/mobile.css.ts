@@ -127,6 +127,17 @@ export const MOBILE_CSS = `
     transform: none;
   }
 }
+/* Preview sheet rise: the aionui preview column opens as a bottom sheet. */
+@keyframes dsh-mobile-nav-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* ---------- mobile-only layout ---------- */
 
@@ -190,6 +201,25 @@ export const MOBILE_CSS = `
      flow's scroll container is the only _scroll element holding markdown
      <p> paragraphs — the composer's own scroll (textarea) is excluded
      via :has(p). */
+  /* The official main scroll body reserves scrollbar-gutter for desktop
+     scrollbars (8px), which shoves every column off-center on a phone.
+     Mobile scrollbars are overlay, so reclaim the gutter. */
+  [data-phase] [class$="_scrollBody"] {
+    scrollbar-gutter: auto !important;
+  }
+  /* Message action rows (copy / run-time badges) can overflow the right
+     edge on narrow screens — keep them inside the message width. */
+  [data-phase] [class$="_actions"] {
+    overflow: hidden !important;
+  }
+  [data-phase] [class$="_actions"] [class$="_timeEnd"] {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
   [data-phase] [class$="_scroll"]:has(p) {
     padding-left: 20px !important;
     padding-right: 20px !important;
@@ -409,7 +439,19 @@ export const MOBILE_CSS = `
     visibility: hidden !important;
   }
   [data-aionui-preview-col] {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: 8px !important;
+    width: auto !important;
+    height: min(50dvh, 420px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
     z-index: 56 !important;
+    animation: dsh-mobile-nav-sheet-up .24s var(--ds-ease-out, ease-in-out) !important;
   }
   /* The Files action opens the explorer sheet (frame marker). */
   [data-mobile-nav="frame"][data-aionui-explorer-open] [data-aionui-explorer-col] {
