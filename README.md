@@ -2,7 +2,7 @@
   <img src="assets/hero.png" width="52%" alt="移动端会话主页:中心列独占全宽,左侧无残留阴影。" />
 </p>
 
-# dsh-mobile-nav
+# dsh-web-mobile
 
 **让 DeepSeek Harness Web UI 在手机上真正可用**——窄屏(< 1024px)下隐藏左侧 rail,目录变成 overlay 抽屉,会话区独占全宽。纯 client 插件,宽屏(≥1024px)下与未安装时完全一致。
 
