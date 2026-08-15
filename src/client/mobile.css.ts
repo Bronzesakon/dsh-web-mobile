@@ -295,9 +295,13 @@ export const MOBILE_CSS = `
     top: 12px !important;
     z-index: 2 !important;
   }
+  /* The Files action sits at the FAR RIGHT of the header so it reads as a
+     distinct control from the directory toggle on the left (which opens
+     the history sidebar). */
   [data-mobile-nav="files"] {
     position: absolute !important;
-    left: 40px !important;
+    left: auto !important;
+    right: 8px !important;
     top: 12px !important;
     z-index: 2 !important;
   }
@@ -481,10 +485,10 @@ export const MOBILE_CSS = `
     left: 8px !important;
     right: 8px !important;
     top: auto !important;
-    bottom: 8px !important;
+    bottom: 24px !important;
     width: auto !important;
     height: min(50dvh, 420px) !important;
-    max-height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 32px) !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
