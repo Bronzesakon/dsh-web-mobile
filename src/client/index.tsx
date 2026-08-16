@@ -96,15 +96,32 @@ export function apply(ctx: ClientContext): void {
   // sheet's own collapse chevron is tapped, so closing is symmetric with
   // opening.
   ctx.effect(() => {
+    // Arm on the CURRENT width and re-arm on every width change: the guard
+    // used to run once at apply time, so a wide→narrow transition (desktop
+    // resize, tablet split view) left the markers dead and the explorer /
+    // preview sheets could neither open nor close properly.
     const narrow = window.matchMedia('(max-width: 1023px)')
-    if (!narrow.matches) return () => {}
-    const onChevronClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target === null || !target.closest('.aionui-collapse-chevron')) return
-      document.querySelector('[data-mobile-nav="frame"]')?.removeAttribute('data-aionui-explorer-open')
+    let cleanup: (() => void) | undefined
+    const install = (): void => {
+      cleanup?.()
+      if (!narrow.matches) {
+        cleanup = undefined
+        return
+      }
+      const onChevronClick = (event: MouseEvent) => {
+        const target = event.target as HTMLElement | null
+        if (target === null || !target.closest('.aionui-collapse-chevron')) return
+        document.querySelector('[data-mobile-nav="frame"]')?.removeAttribute('data-aionui-explorer-open')
+      }
+      document.addEventListener('click', onChevronClick, true)
+      cleanup = () => document.removeEventListener('click', onChevronClick, true)
     }
-    document.addEventListener('click', onChevronClick, true)
-    return () => document.removeEventListener('click', onChevronClick, true)
+    install()
+    narrow.addEventListener('change', install)
+    return () => {
+      narrow.removeEventListener('change', install)
+      cleanup?.()
+    }
   }, 'dsh-mobile-nav: aionui explorer close marker')
 
   // dsh-web-ui compatibility: the aionui preview column persists its open
@@ -116,46 +133,66 @@ export function apply(ctx: ClientContext): void {
   // whenever the suite hides the column again (collapse chevron / tab
   // close), so a restored-but-unwanted sheet never appears.
   ctx.effect(() => {
+    // Arm on the CURRENT width and re-arm on every width change (see the
+    // explorer marker effect for why).
     const narrow = window.matchMedia('(max-width: 1023px)')
-    if (!narrow.matches) return () => {}
-    const frame = (): HTMLElement | null => document.querySelector('[data-mobile-nav="frame"]')
-    const onTap = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target === null) return
-      if (target.closest('[data-aionui-explorer-col] [class$="_treeRow"]') === null) return
-      frame()?.setAttribute('data-aionui-preview-open', '')
-    }
-    // The preview sheet's own collapse button (the two inward arrows in the
-    // tab bar) closes the AionUI store, but on mobile the suite's layout sync
-    // can be skipped while its shell-track mirror is not ready yet — in that
-    // case the inline visibility never flips to hidden and the visibility
-    // watcher below would never clear our marker. Clear it directly on the
-    // button click so the sheet always closes regardless of the suite's sync.
-    const onCollapse = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target === null) return
-      if (target.closest('[data-aionui-preview-col] [class$="_panelCollapse"]') !== null) {
-        frame()?.removeAttribute('data-aionui-preview-open')
+    let cleanup: (() => void) | undefined
+    const install = (): void => {
+      cleanup?.()
+      if (!narrow.matches) {
+        cleanup = undefined
+        return
+      }
+      const frame = (): HTMLElement | null => document.querySelector('[data-mobile-nav="frame"]')
+      const onTap = (event: MouseEvent) => {
+        const target = event.target as HTMLElement | null
+        if (target === null) return
+        const row = target.closest('[data-aionui-explorer-col] [class$="_treeRow"]')
+        if (row === null) return
+        // Only FILE rows open the preview sheet. Directory rows toggle
+        // expansion and must not pop the (possibly stale, restored-from-
+        // localStorage) preview tab over the tree.
+        if (row.querySelector('[class$="_treeArrow"]') !== null) return
+        frame()?.setAttribute('data-aionui-preview-open', '')
+      }
+      // The preview sheet's own collapse button (the two inward arrows in the
+      // tab bar) closes the AionUI store, but on mobile the suite's layout sync
+      // can be skipped while its shell-track mirror is not ready yet — in that
+      // case the inline visibility never flips to hidden and the visibility
+      // watcher below would never clear our marker. Clear it directly on the
+      // button click so the sheet always closes regardless of the suite's sync.
+      const onCollapse = (event: MouseEvent) => {
+        const target = event.target as HTMLElement | null
+        if (target === null) return
+        if (target.closest('[data-aionui-preview-col] [class$="_panelCollapse"]') !== null) {
+          frame()?.removeAttribute('data-aionui-preview-open')
+        }
+      }
+      const sync = (): void => {
+        const pv = document.querySelector<HTMLElement>('[data-aionui-preview-col]')
+        if (pv === null) return
+        // Read the suite's inline visibility, not the computed value: while the
+        // `data-aionui-preview-open` marker is present our stylesheet forces the
+        // sheet visible with !important, so getComputedStyle() would never report
+        // hidden and the marker would never be cleared.
+        if (pv.style.visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
+      }
+      document.addEventListener('click', onTap, true)
+      document.addEventListener('click', onCollapse, true)
+      const observer = new MutationObserver(sync)
+      observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] })
+      sync()
+      cleanup = () => {
+        document.removeEventListener('click', onTap, true)
+        document.removeEventListener('click', onCollapse, true)
+        observer.disconnect()
       }
     }
-    const sync = (): void => {
-      const pv = document.querySelector<HTMLElement>('[data-aionui-preview-col]')
-      if (pv === null) return
-      // Read the suite's inline visibility, not the computed value: while the
-      // `data-aionui-preview-open` marker is present our stylesheet forces the
-      // sheet visible with !important, so getComputedStyle() would never report
-      // hidden and the marker would never be cleared.
-      if (pv.style.visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
-    }
-    document.addEventListener('click', onTap, true)
-    document.addEventListener('click', onCollapse, true)
-    const observer = new MutationObserver(sync)
-    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] })
-    sync()
+    install()
+    narrow.addEventListener('change', install)
     return () => {
-      document.removeEventListener('click', onTap, true)
-      document.removeEventListener('click', onCollapse, true)
-      observer.disconnect()
+      narrow.removeEventListener('change', install)
+      cleanup?.()
     }
   }, 'dsh-mobile-nav: preview sheet open marker')
 
@@ -167,48 +204,63 @@ export function apply(ctx: ClientContext): void {
   // marked row out as ONE horizontally scrolling line with every metric
   // reachable.
   ctx.effect(() => {
+    // Arm on the CURRENT width and re-arm on every width change (see the
+    // explorer marker effect for why).
     const narrow = window.matchMedia('(max-width: 1023px)')
-    if (!narrow.matches) return () => {}
-    // The composer root renders the TPS readout ("TPS 89.4 tok/s") as its
-    // own row BELOW the status strip; fold it into the strip so every
-    // metric scrolls together. The suite re-renders its own tree, so this
-    // must be idempotent and re-run on every mutation.
-    const moveTps = (stats: Element): void => {
-      if ([...stats.children].some((c) => /^TPS\s+\d/.test((c.textContent ?? '').trim()))) return
-      const stack = stats.closest('[class$="_composerStack"]')
-      if (stack === null) return
-      for (const el of stack.querySelectorAll('div')) {
-        const text = (el.textContent ?? '').trim()
-        if (!/^TPS\s+\d/.test(text)) continue
-        if (el.children.length > 0) continue
-        stats.appendChild(el)
+    let cleanup: (() => void) | undefined
+    const install = (): void => {
+      cleanup?.()
+      if (!narrow.matches) {
+        cleanup = undefined
         return
       }
-    }
-    const mark = (): void => {
-      for (const root of document.querySelectorAll('[data-phase] [class$="_root"]')) {
-        // The status row lives inside the composer stack; message-area
-        // blocks can also mention turns/steps and must be skipped.
-        if (root.closest('[class$="_composerStack"]') === null) continue
-        // The todo plan strip also lives in the composer stack and its root
-        // ends in _root. Its items may legitimately contain "步"/"steps" in
-        // their text, so never mistake it (or any interactive dock panel)
-        // for the stats strip.
-        if (root.matches('[data-testid="todo-panel"]')) continue
-        if (root.querySelector('button') !== null) continue
-        const text = root.textContent ?? ''
-        if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
-        if (root.querySelector('textarea') !== null) continue
-        root.setAttribute('data-mobile-nav', 'stats')
-        moveTps(root)
-        return
+      // The composer root renders the TPS readout ("TPS 89.4 tok/s") as its
+      // own row BELOW the status strip; fold it into the strip so every
+      // metric scrolls together. The suite re-renders its own tree, so this
+      // must be idempotent and re-run on every mutation.
+      const moveTps = (stats: Element): void => {
+        if ([...stats.children].some((c) => /^TPS\s+\d/.test((c.textContent ?? '').trim()))) return
+        const stack = stats.closest('[class$="_composerStack"]')
+        if (stack === null) return
+        for (const el of stack.querySelectorAll('div')) {
+          const text = (el.textContent ?? '').trim()
+          if (!/^TPS\s+\d/.test(text)) continue
+          if (el.children.length > 0) continue
+          stats.appendChild(el)
+          return
+        }
+      }
+      const mark = (): void => {
+        for (const root of document.querySelectorAll('[data-phase] [class$="_root"]')) {
+          // The status row lives inside the composer stack; message-area
+          // blocks can also mention turns/steps and must be skipped.
+          if (root.closest('[class$="_composerStack"]') === null) continue
+          // The todo plan strip also lives in the composer stack and its root
+          // ends in _root. Its items may legitimately contain "步"/"steps" in
+          // their text, so never mistake it (or any interactive dock panel)
+          // for the stats strip.
+          if (root.matches('[data-testid="todo-panel"]')) continue
+          if (root.querySelector('button') !== null) continue
+          const text = root.textContent ?? ''
+          if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
+          if (root.querySelector('textarea') !== null) continue
+          root.setAttribute('data-mobile-nav', 'stats')
+          moveTps(root)
+          return
+        }
+      }
+      const observer = new MutationObserver(mark)
+      observer.observe(document.body, { childList: true, subtree: true })
+      mark()
+      cleanup = () => {
+        observer.disconnect()
       }
     }
-    const observer = new MutationObserver(mark)
-    observer.observe(document.body, { childList: true, subtree: true })
-    mark()
+    install()
+    narrow.addEventListener('change', install)
     return () => {
-      observer.disconnect()
+      narrow.removeEventListener('change', install)
+      cleanup?.()
     }
   }, 'dsh-mobile-nav: stats line marker')
 
@@ -218,36 +270,51 @@ export function apply(ctx: ClientContext): void {
   // with the Web Animations API each time a column turns visible, then
   // leave the resting state to the stylesheet.
   ctx.effect(() => {
+    // Arm on the CURRENT width and re-arm on every width change (see the
+    // explorer marker effect for why).
     const narrow = window.matchMedia('(max-width: 1023px)')
-    if (!narrow.matches) return () => {}
-    const cols = ['[data-aionui-explorer-col]', '[data-aionui-preview-col]']
-    const seen = new Map<string, boolean>()
-    const play = (el: Element): void => {
-      el.animate(
-        [
-          { opacity: 0, transform: 'translateY(28px)' },
-          { opacity: 1, transform: 'none' },
-        ],
-        { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' },
-      )
-    }
-    const check = (): void => {
-      for (const sel of cols) {
-        const el = document.querySelector(sel)
-        if (el === null) continue
-        const visible = getComputedStyle(el).visibility === 'visible'
-        const prev = seen.get(sel) ?? false
-        if (visible && !prev) play(el)
-        seen.set(sel, visible)
+    let cleanup: (() => void) | undefined
+    const install = (): void => {
+      cleanup?.()
+      if (!narrow.matches) {
+        cleanup = undefined
+        return
+      }
+      const cols = ['[data-aionui-explorer-col]', '[data-aionui-preview-col]']
+      const seen = new Map<string, boolean>()
+      const play = (el: Element): void => {
+        el.animate(
+          [
+            { opacity: 0, transform: 'translateY(28px)' },
+            { opacity: 1, transform: 'none' },
+          ],
+          { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' },
+        )
+      }
+      const check = (): void => {
+        for (const sel of cols) {
+          const el = document.querySelector(sel)
+          if (el === null) continue
+          const visible = getComputedStyle(el).visibility === 'visible'
+          const prev = seen.get(sel) ?? false
+          if (visible && !prev) play(el)
+          seen.set(sel, visible)
+        }
+      }
+      const observer = new MutationObserver(check)
+      // Visibility flips come through inline style mutations (suite) or the
+      // explorer-open marker on the frame; class changes are watched too.
+      observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class', 'data-aionui-explorer-open'] })
+      check()
+      cleanup = () => {
+        observer.disconnect()
       }
     }
-    const observer = new MutationObserver(check)
-    // Visibility flips come through inline style mutations (suite) or the
-    // explorer-open marker on the frame; class changes are watched too.
-    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class', 'data-aionui-explorer-open'] })
-    check()
+    install()
+    narrow.addEventListener('change', install)
     return () => {
-      observer.disconnect()
+      narrow.removeEventListener('change', install)
+      cleanup?.()
     }
   }, 'dsh-mobile-nav: sheet rise animation replay')
 

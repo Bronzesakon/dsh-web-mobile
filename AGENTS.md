@@ -1,0 +1,77 @@
+# dsh-mobile-nav
+
+## Project
+
+- 纯客户端 DSH（DeepSeek Harness）Web UI 插件；npm 包名 `@dsh-external/dsh-mobile-nav`，Git 仓库/README 名 `dsh-web-mobile`，patch 行 id `dsh-mobile-nav`。
+- 作用：窄屏（<1024px）把官方 Web UI 的侧栏 rail 改为 overlay 抽屉、会话区全宽，并适配状态栏/安全区/`theme-color`、设置弹窗、文件树/预览底部浮层、统计栏等；桌面端（≥1024px）刻意无操作，与未安装插件一致。
+- 单包仓库（非 monorepo），没有 workspace 配置；`packageManager` 为 `pnpm@11.7.0`。
+- 入口/边界：host 半区 `src/index.ts` 只导出空 `apply()` 占位；浏览器半区 `src/client/index.tsx` 是真正入口，通过 `package.json` 的 `exports["./client"]` 和 `dsh.client.platform: "web"` 被发现。
+- 发布包 `files` 包含 `lib`、`src`、`assets`、`cordis.patch.yml`、`README.md`、`LICENSE`；`lib/` 已提交，GitHub 分发无需构建脚本。
+
+## Commands
+
+- 安装依赖：`pnpm install`
+- 构建：`pnpm build`
+  - 等价于：`tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs`
+  - 修改 `src/` 后必须重跑，并提交更新后的 `lib/`。
+- 类型检查：`pnpm verify`
+  - 等价于：`tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit`
+- 打包/发布前：`npm run prepack`（内部执行 `npm run build`）；`npm pack` 会触发它。
+- **没有 test/lint/CI 脚本**；用 `pnpm verify`、`git diff --check` 和手动浏览器检查。
+- 本地开发安装：`dsh plugin --profile web add link:/path/to/dsh-mobile-nav`，然后重启 `dsh web`。
+- 配置 sanity check：`dsh --profile web --dump-config` 应能看到 `dsh-mobile-nav` 插件行。
+- 用户安装（README）：`dsh plugin --profile web add github:mexiaosqwq/dsh-web-mobile`。
+
+## Architecture
+
+- 双半区插件：
+  - host：`src/index.ts` 空 `apply()`，仅让插件出现在 host Loader。
+  - client：`src/client/index.tsx` 注册 locale、注入样式、安装 viewport/状态栏/兼容性 effect，并注册所有 slot。
+- 客户端 fiber `inject = ['slots', 'layout', 'locale', 'sessionLogDownload']`。
+- slot 注册：
+  - `conversation.session.header.actions` → `MobileNavToggle`（目录开关 + 文件树按钮）
+  - `shell.overlay` → `MobileNavOverlay`（遮罩 / 浮动按钮 / Escape 与点击关闭）
+  - `sidebar.footer.action` → `MobileDrawerFooter`（文件 + 会话日志下载）
+- 核心文件：
+  - `src/client/MobileNavOverlay.tsx`：维护 `data-mobile-nav="frame"`，导航关闭启发式。
+  - `src/client/MobileNavToggle.tsx`：会话头部控件。
+  - `src/client/MobileDrawerFooter.tsx`：抽屉底部操作。
+  - `src/client/mobile.css.ts`：全部移动端样式（TS 模板字符串，`<style data-plugin>` 注入）。
+  - `src/client/locales.ts`：`mobileNav` i18n；`zh` 是 key 源真相，`en` 是类型镜像。
+  - `scripts/build-client.mjs`：自定义打包器。
+- 构建流程：client tsc 输出到 `.client-build/`，`build-client.mjs` 把相对模块内联成 `window.__ModuleLoader__.load({...})` 并写入 `lib/client.js`，平台模块保留 `require()`；随后删除 `.client-build/` 和 `lib/client.js.map`。
+- 布局驱动：`data-mobile-nav="frame"` + `data-sidebar-collapsed`；移动端 CSS 在 `(max-width: 1023px)` 生效，桌面端 `(min-width: 1024px)` 隐藏所有 mobile 控件。
+- 第三方兼容（dsh-web-ui-all、dshmarket、dsh-usage-stats）通过 DOM 标记 `data-aionui-*`、`MutationObserver`、后缀类选择器/文本锚点实现，不改第三方源码。
+
+## Conventions
+
+- 优先使用稳定 `data-*` 属性（`data-phase`、`data-sidebar-collapsed`、`data-shell-overlay`、`data-aionui-*`）和结构化选择器；避免 hashed class。无法避免时用后缀选择器（如 `[class$="_root"]`）或文本/结构锚点。
+- 所有 style 标签、监听器、MutationObserver 等长生命周期资源都要在 `ctx.effect(() => { ...; return disposer }, label)` 中创建并清理。
+- i18n：新增 key 先加 `zh`，再在 `en` 加同 key 镜像；`MobileNavKey` 从 `zh` 推导。
+- 客户端导入纯净性：跨 DSH 包的 SlotMap/Context 类型增强只用 type-only import；运行时只导入平台模块（React、primitives、slots 等）。
+- 不要手改 `lib/`；构建产物入库，修改 `src/` 后 `pnpm build` 并提交 `lib/`。
+- 提交信息用 conventional 前缀：`feat(mobile):`、`fix(mobile):`、`docs:`、`chore:`。
+- 桌面端必须保持 no-op：新增样式/逻辑要确保 ≥1024px 不改变 UI。
+
+## Pitfalls
+
+- 命名不一致：README/Git 仓库叫 `dsh-web-mobile`，npm 包名是 `@dsh-external/dsh-mobile-nav`，patch 行 id 是 `dsh-mobile-nav`；改文档/manifest 时注意区分。
+- 不要手改 `lib/client.js`：由 `pnpm build` 生成，改动应落在 `src/client/`。
+- `.client-build/` 是临时目录，构建脚本会删除；不要当作稳定产物。
+- 抽屉打开态必须用 `transform: none`，不要用 `translateX(0)`：identity transform 会成为 fixed 定位后代的包含块，导致 settings 等浮层错位。
+- 抽屉点击关闭规则：忽略会话行内按钮（kebab 等）和 `[aria-modal="true"]` 模态；Escape 处理让位于模态。
+- CSS 依赖 `:has()`（Chromium 105+），并遵循 `prefers-reduced-motion`。
+- 为第三方插件做兼容时按 README 列出的精确版本验证（`dsh-web-ui-all` 0.1.14、`dshmarket` 1.2.2、`dsh-usage-stats` 0.1.2）；选择器保持作用域，避免影响桌面端。
+- 抽屉底部顺序由 `sidebar.footer.action` list 槽的 `(priority, order)` 升序决定：`dsh-remote-web-ui` 不设 order（默认 0，听筒+下载图标行在最上）、`dsh-usage-stats` 用 10（用量/余额徽章）。mobile-nav 该注册必须用 `order: 5`：若同为 10 会平票按注册顺序，徽章会插到「文件浏览/导出会话日志」之上（2026-08-16 修过）。
+- 抽屉 footer 按钮渲染成 ~3 倍高（约 100px）或行距出现 40~128px 不规则间隙时，先怀疑手机浏览器加载了旧 bundle / 残留 style 标签（当前 CSS 是 34px 按钮 + 6~8px 间距）；对比 `curl -s http://127.0.0.1:3080/ | grep -o 'dsh-mobile-nav/client.js?rev=…'` 的 rev 与服务端文件，强刷/重开页面验证后再改代码。
+- **bundle 永远是最新的**：`/plugins/<id>/client.js` 响应带 `cache-control: no-cache` 且无 validators，服务端对任意 rev 查询都读当前 lib 文件 → 手机上的「旧行为」只可能来自激进缓存/长活 tab（整页 HTML/JS 被浏览器缓存），服务端无法下发旧 bundle。排查手机端时先让用户强刷 + 清站点数据，而不是改代码。
+- aionui 标记 effect 必须按当前宽度挂载并在宽度变化时重挂（matchMedia change）：只在 apply 时查一次 `narrow.matches` 会让「先宽后窄」（桌面缩放、平板分屏）后文件树点文件永远打不开预览、折叠按钮失效（2026-08-16 修，explorer 关闭 / preview 开关 / 统计行 / 动画重放 4 个 effect 同一模式）。
+- 文件树**目录行不得设置 `data-aionui-preview-open`**：只允许无 `[class$="_treeArrow"]` 的文件行触发，否则点目录展开会弹出 localStorage 恢复的旧预览 tab（用户视角 = 「随便点一下全屏弹出一个 md 内容」，2026-08-16 修）。
+- 预览浮层打开时文件树浮层必须让位（CSS：`[data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-explorer-col] { visibility: hidden !important }`，与 explorer-open 规则同 specificity，必须排在它之后）；关掉预览后文件树自动回来。
+- 2026-08-16「手机全屏 md」事故真相：全屏内容 = 会话消息里的 GenUI（dsh-ui fence）卡片（「当前结构」表格），不是任何文件/预览。当前 bundle + 当前 genui CSS 均无全屏渲染路径（aionui 列是底部浮层且被门控、genui block/panel 无 fixed 规则）→ 手机端再复现时先抓 URL 栏：裸文件页 = 浏览器导航到了文件 URL；有 app UI = 旧 JS 缓存。别凭截图猜「旧 bundle」。
+- 没有测试框架：改布局后需在真实 DSH web profile + 窄屏（约 390px）和桌面（≥1024px）手动验证。
+
+## Maintenance
+
+- 发现新的命令、约定或坑时，就地更新本文件；保持简洁、只留 repo-specific 事实。
+- 第三方兼容版本变化时，同步更新 README 的“兼容插件”列表和本文 Pitfalls。

@@ -663,6 +663,14 @@ export const MOBILE_CSS = `
   [data-mobile-nav="frame"][data-aionui-explorer-open] [data-aionui-explorer-col] {
     visibility: visible !important;
   }
+  /* While the preview sheet is up, the explorer sheet yields (two stacked
+     bottom sheets would read as one broken overlay). Closing the preview
+     via its collapse chevron / tab close clears the marker, and the
+     explorer sheet returns. Same specificity as the explorer-open rule, so
+     this must stay AFTER it. */
+  [data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-explorer-col] {
+    visibility: hidden !important;
+  }
   /* The open drawer must never sit under a sheet: while the frame is in the
      narrow-expanded state both sheets yield (later in the file than the
      open marker rule, so it wins at equal specificity). */
