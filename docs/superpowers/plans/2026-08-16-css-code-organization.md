@@ -34,7 +34,7 @@
 **Interfaces:**
 - Produces: `styles/index.ts` 导出 `MOBILE_CSS: string`（四个部分按序 `join('\n')`）；`index.tsx` 继续 `import { MOBILE_CSS } from './styles/index.ts'`。Task 2 不依赖本任务的新导出（只依赖 `MOBILE_CSS` 名字不变）。
 
-- [ ] **Step 1: 写并运行切片脚本（生成 4 个部分文件 + index.ts）**
+- [x] **Step 1: 写并运行切片脚本（生成 4 个部分文件 + index.ts）**
 
 写 `/tmp/split-css.mjs`（内容如下），在仓库根目录运行：
 
@@ -92,26 +92,26 @@ console.log(joined === css ? 'SPLIT OK: byte-identical round trip' : `SPLIT MISM
 Run: `node /tmp/split-css.mjs`
 Expected: `SPLIT OK: byte-identical round trip`。若出现 MISMATCH：检查对应 byte 位置的边界（空白行假设 `\n\n` 是否成立），修正脚本后重跑；不手工改生成文件。
 
-- [ ] **Step 2: 检查生成结果**
+- [x] **Step 2: 检查生成结果**
 
 Run: `head -5 src/client/styles/base.css.ts && head -5 src/client/styles/misc.css.ts && cat src/client/styles/index.ts`
 Expected: 每个部分文件以 banner 注释 + `export const X_CSS = \`` 开头；`misc.css.ts` 内含三段（hero composer → tablet → desktop）且注释行齐全；`index.ts` 与脚本中写入内容一致。
 
-- [ ] **Step 3: 改 index.tsx 的 import**
+- [x] **Step 3: 改 index.tsx 的 import**
 
 `src/client/index.tsx` 中 `import { MOBILE_CSS } from './mobile.css.ts'` 改为 `import { MOBILE_CSS } from './styles/index.ts'`（其余不动；apply() 里 `dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'` 是注入元数据字符串，保持原样）。
 
-- [ ] **Step 4: 删除旧文件并类型检查**
+- [x] **Step 4: 删除旧文件并类型检查**
 
 Run: `rm src/client/mobile.css.ts && pnpm verify`
 Expected: 退出码 0，无类型错误。
 
-- [ ] **Step 5: 构建**
+- [x] **Step 5: 构建**
 
 Run: `pnpm build`
 Expected: `client bundle written: lib/client.js (N modules inlined)`，N 应比拆分前多 4（styles/index.ts + 4 个部分文件；debug.ts 等其他模块数不变）。
 
-- [ ] **Step 6: bundle 抽查 + 残留检查**
+- [x] **Step 6: bundle 抽查 + 残留检查**
 
 ```bash
 node -e "const b=require('fs').readFileSync('lib/client.js','utf8');for(const [p,probe] of [['base','data-mobile-nav=\"fab\"'],['layout','data-sidebar-collapsed'],['compat','data-aionui-explorer-col'],['misc','data-phase=\"hero\"']]){console.log((b.includes(probe)?'OK':'MISSING')+': '+p+' probe')}"
@@ -120,7 +120,7 @@ grep -rn "from './mobile.css.ts'" src/ || echo 'no import references in src/'
 
 Expected: 4 个 probe 全部 OK；`src/` 无 import 引用——注意 `index.tsx` 中 `dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'` 含 'mobile.css' 字符串，这是注入元数据，按设计保留，不要改。
 
-- [ ] **Step 7: 浏览器双宽度抽查（playwright）**
+- [x] **Step 7: 浏览器双宽度抽查（playwright）**
 
 窄屏：
 1. `browser_resize` 390×844；`browser_navigate` http://127.0.0.1:3080；等待 2s（`browser_wait_for` time:2）。
@@ -132,7 +132,7 @@ Expected: 4 个 probe 全部 OK；`src/` 无 import 引用——注意 `index.ts
 
 若页面要求登录/插件 bundle 未更新（rev 未变，见 AGENTS.md 坑：`curl -s http://127.0.0.1:3080/ | grep -o 'dsh-mobile-nav/client.js?rev=[^"]*'`），停在这里问用户强刷/重启 `dsh web` 后人工复核。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
 ```bash
 git add src/client/styles src/client/index.tsx -A && git rm src/client/mobile.css.ts && git add lib/client.js
@@ -153,7 +153,7 @@ git commit -m "refactor(mobile): split mobile css into themed files"
 - Produces: `installPhoneChrome(ctx: ClientContext): void`、`installAionuiCompat(ctx: ClientContext): void`、`installStatsLine(ctx: ClientContext): void` —— 各自内部调用 `ctx.effect(fn, label)`，label 与拆分前逐字相同。`index.tsx` 在样式注入 effect 之后、slot 注册之前按序调用。
 - Consumes: 无（只依赖 `ClientContext` 类型与既有 DOM 结构）。
 
-- [ ] **Step 1: 创建 effects/phone-chrome.ts**
+- [x] **Step 1: 创建 effects/phone-chrome.ts**
 
 写 `src/client/effects/phone-chrome.ts`，内容如下（注释与 effect 体逐字来自拆分前的 `index.tsx`，勿改动任何字符；只加了函数包装）：
 
@@ -214,7 +214,7 @@ export function installPhoneChrome(ctx: ClientContext): void {
 }
 ```
 
-- [ ] **Step 2: 创建 effects/aionui-compat.ts**
+- [x] **Step 2: 创建 effects/aionui-compat.ts**
 
 写 `src/client/effects/aionui-compat.ts`：三个 effect 按拆分前在 `index.tsx` 中的原顺序排列（explorer 关闭标记 → preview 开关标记 → 升起动画重放），每个 effect 的注释、体、label 逐字照搬（可从当前 `index.tsx` 复制，label 分别是 `'dsh-mobile-nav: aionui explorer close marker'`、`'dsh-mobile-nav: preview sheet open marker'`、`'dsh-mobile-nav: sheet rise animation replay'`），文件骨架：
 
@@ -256,11 +256,11 @@ export function installAionuiCompat(ctx: ClientContext): void {
 
 照搬完成后自检：`grep -c 'ctx.effect' src/client/effects/aionui-compat.ts` 应输出 3；三个 label 字符串各出现 1 次（`grep -c` 累计 3）。
 
-- [ ] **Step 3: 创建 effects/stats-line.ts**
+- [x] **Step 3: 创建 effects/stats-line.ts**
 
 写 `src/client/effects/stats-line.ts`，把当前 `src/client/index.tsx` 中 224–283 行（起点锚点注释 `// The official conversation status row (turns / steps / LLM time / TTFT /`，终点唯一 label `'dsh-mobile-nav: stats line marker'`）的整段原文（含大注释、`mark`/`moveTps` 函数、install/cleanup 包装）逐字照搬进 `installStatsLine(ctx)` 的 `ctx.effect` 调用，文件骨架同 Task 2 Step 1。自检：`grep -c 'stats line marker' src/client/effects/stats-line.ts` 应输出 1。
 
-- [ ] **Step 4: 重写 index.tsx 为编排层**
+- [x] **Step 4: 重写 index.tsx 为编排层**
 
 把 `src/client/index.tsx` 的 apply() 改写为：locale 注册 effect（原样）→ 样式注入 effect（原样）→ `installPhoneChrome(ctx)` → `installAionuiCompat(ctx)` → `installStatsLine(ctx)` → 三个 slot 注册（原样）。import 改为：
 
@@ -280,16 +280,16 @@ import type { MobileNavKey } from './locales.ts'
 
 apply() 内顺序：locale 注册 → 样式注入 → `installDebugBadge(ctx)`（保留在 index.tsx）→ `installPhoneChrome(ctx)` → `installAionuiCompat(ctx)` → `installStatsLine(ctx)` → 三个 slot 注册。保留：文件顶部 `declare module '@deepseek-ai/dsh-client-ui-slots'` 增强、`export const inject`、apply 的 JSDoc、文件底部 4 行 type-only import。删除原 5 个 effect 的实现体（只留 install 调用）。
 
-- [ ] **Step 5: 类型检查 + 构建**
+- [x] **Step 5: 类型检查 + 构建**
 
 Run: `pnpm verify && pnpm build`
 Expected: 退出码 0；`client bundle written`；`grep -c 'installPhoneChrome\|installAionuiCompat\|installStatsLine' lib/client.js` ≥ 3。
 
-- [ ] **Step 6: 浏览器双宽度抽查（playwright）**
+- [x] **Step 6: 浏览器双宽度抽查（playwright）**
 
 同 Task 1 Step 7 的步骤与通过标准；重点追加：控制台无 error；窄屏下打开设置弹窗再关闭后，`document.querySelectorAll('style[data-plugin]')` 长度 = 1（`browser_evaluate`），无残留 style 标签（AGENTS.md 历史坑）。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add src/client -A && git add lib/client.js
@@ -303,7 +303,7 @@ git commit -m "refactor(mobile): extract client effects into modules"
 **Files:**
 - Modify: `AGENTS.md`（Architecture 核心文件清单 + Conventions 提交前缀）
 
-- [ ] **Step 1: 更新 Architecture 节**
+- [x] **Step 1: 更新 Architecture 节**
 
 把 `AGENTS.md` 中这一行：
 `  - \`src/client/mobile.css.ts\`：全部移动端样式（TS 模板字符串，\`<style data-plugin>\` 注入）。`
@@ -311,17 +311,17 @@ git commit -m "refactor(mobile): extract client effects into modules"
 `  - \`src/client/styles/\`：全部移动端样式，按主题拆 4 文件（base / layout / compat / misc），\`styles/index.ts\` 按原字节序拼接导出 \`MOBILE_CSS\`（单一 \`<style data-plugin>\` 注入，勿重排）。`
 `  - \`src/client/effects/\`：客户端 effect，按域拆 3 文件（phone-chrome / aionui-compat / stats-line）；\`index.tsx\` 只做编排（locale、样式注入、install 调用、slot 注册）。`
 
-- [ ] **Step 2: 更新 Pitfalls 节（mobile.css.ts 引用）**
+- [x] **Step 2: 更新 Pitfalls 节（mobile.css.ts 引用）**
 
 `AGENTS.md` 的 Pitfalls 有一条「从 `mobile.css.ts` 抽 CSS 做复现时：① 模板起点用 `indexOf('`', indexOf('export const MOBILE_CSS ='))`…」——拆分后该文件已不存在。把该条目整段替换为：
 
 `- 抽 CSS 做复现时：`MOBILE_CSS` 由 `src/client/styles/index.ts` 按 base → layout → compat → misc 拼接——直接读对应 `styles/*.css.ts` 的模板内容拼接即可，不必解析 bundle；注释里不能写反引号（会截断模板字符串成 TS 语法错误）、注释必须完整保留（截断的 `/*` 会让 CSS 解析器吞掉下一条规则）这两条仍适用。`
 
-- [ ] **Step 3: 更新 Conventions 节**
+- [x] **Step 3: 更新 Conventions 节**
 
 提交前缀一行 `feat(mobile):`、`fix(mobile):`、`docs:`、`chore:` 改为 `feat(mobile):`、`fix(mobile):`、`refactor(mobile):`、`docs:`、`chore:`。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add AGENTS.md
@@ -332,14 +332,27 @@ git commit -m "docs: update AGENTS.md for split styles/effects layout"
 
 ### Task 4: 最终验收
 
-- [ ] **Step 1: 全量回归**
+- [x] **Step 1: 全量回归**
 
 Run: `pnpm verify && pnpm build && git diff --check && git status --short`
 Expected: 全部通过；工作区只剩非本任务文件（`.dsh-vision-toolkit/`、`Screenshot_*.jpg`、`*.tgz` 等既有未跟踪物）。
 
-- [ ] **Step 2: 对照成功标准核对**
+- [x] **Step 2: 对照成功标准核对**
 
-- [ ] Step 1/2/3 各自提交独立（`git log --oneline -4` 应有 3 个新提交：split css / extract effects / update AGENTS.md）。
-- [ ] 窄屏 + 桌面 playwright 抽查通过（抽屉、浮动按钮、设置弹窗、浮层、单一 style 标签）。
-- [ ] `lib/` 已重新生成并随各步提交。
-- [ ] 无 Out of scope 项被触碰（组件、locales、构建脚本、CSS 内容均未改）。
+- [x] Step 1/2/3 各自提交独立（`git log --oneline -4` 应有 3 个新提交：split css / extract effects / update AGENTS.md）。
+- [x] 窄屏 + 桌面 playwright 抽查通过（抽屉、浮动按钮、设置弹窗、浮层、单一 style 标签）。
+- [x] `lib/` 已重新生成并随各步提交。
+- [x] 无 Out of scope 项被触碰（组件、locales、CSS 内容均未改；构建脚本有 1 处必要偏差，见下方验收记录）。
+
+---
+
+### 验收记录（2026-08-16 晚续接会话补充）
+
+会话断开前的状态（上一会话 GUI 内 GenUI 状态表）：实现 ✅（d4afb83）、构建产物 ✅、构建脚本 ⚠️ 待裁决、浏览器验证 ⚠️ 降级、任务审查 ⏳ 断线时后台运行中。本次续接完成：
+
+- **构建脚本偏差裁决**：`scripts/build-client.mjs` 的扁平→递归修复（52 行，随 d4afb83 提交）是 CSS 拆分子目录后 bundler 的必要修复，已被 AGENTS.md Pitfall「build-client.mjs 的扁平→递归（2026-08-16 修）」记录为既有事实 → 视为通过；断线时后台审查的正式结论未回收，如需可另起 review。
+- **全量回归**：`pnpm verify` / `pnpm build`（14 modules inlined）/ `git diff --check` 全部通过；`lib/client.js` 为当前 bundle（sha `f98445928d37`），服务端下发 rev 与本地一致；4 个 CSS 分区探针（fab / sidebar-collapsed / explorer-col / hero）全 OK；`src/` 无 `./mobile.css.ts` 残留引用。
+- **Playwright 双宽度抽查（本次真实执行，通过）**：
+  - 窄屏 390×844 + 会话打开：toggle 可见（28×28，computed `flex`）→ 点击弹出抽屉（280px 左侧滑出）+ 全屏遮罩（390×844）→ 点遮罩右侧区域关闭 ✓ → 再开 + Escape 关闭 ✓；`style[data-plugin]` 仅 1 个（全插件共 98 个）；控制台 0 error。
+  - 桌面 1280×800：toggle `display: none`（no-op 保持），frame 全宽 1280。
+  - 前置坑（与重构无关，供后续参考）：Playwright 复用「长时间挂着的旧页面 context」时会出现 harness web 只渲染最后一条 dsh-ui fence（frame 被内联 `display:none`、fence 挂 app 根级）——任意宽度/新旧 bundle 均复现；全新 context（无旧 localStorage）则渲染正常。遇到此状态换干净 context 重测，不要据此改 mobile-nav 代码（详见 AGENTS.md「手机全屏 md」pitfall 的补充）。
