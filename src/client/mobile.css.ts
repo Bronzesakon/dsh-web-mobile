@@ -308,19 +308,23 @@ export const MOBILE_CSS = `
      Anchored by the composer card (:has(textarea)): row = last child,
      tools = first child, permission pill = its 2nd child, model pill =
      row's last child. */
+  /* The official row pads every group with 12px gaps, which on a phone eats
+     width the model pill needs for the full model ID. Tighten the row to 8px
+     gaps (the modes pill keeps its natural width) so the model name gets
+     every spare pixel. */
   [data-phase] [class*="_card"]:has(textarea) > :last-child {
-    gap: 12px !important;
+    gap: 8px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child {
-    gap: 10px !important;
+    gap: 8px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child > :nth-child(2) {
     flex: 0 0 auto !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
   [data-phase] [class*="_card"]:has(textarea) > :last-child > :last-child {
     flex: 1 1 auto !important;
-    gap: 12px !important;
+    gap: 8px !important;
     min-width: 0 !important;
   }
   /* Let the model selector take the free space in the trailing group so the
@@ -332,6 +336,15 @@ export const MOBILE_CSS = `
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] {
     width: 100% !important;
     max-width: 100% !important;
+  }
+  /* The model label must absorb the trigger's free width: officially it is a
+     fixed-content flex item, so the spare width of a grown pill sits unused
+     between the chevron and the pill edge. Let the label grow and shrink:
+     the full model ID shows whenever the row can fit it, and the ellipsis
+     lands exactly at the available width otherwise. */
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] > [class$="_triggerLabel"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]:not([aria-haspopup="menu"])) {
     flex: 0 0 auto !important;
