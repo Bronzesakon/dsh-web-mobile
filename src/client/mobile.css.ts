@@ -741,16 +741,16 @@ export const MOBILE_CSS = `
   }
   /* Hidden unless the preview sheet is open; the two icons swap on the frame
      fullscreen marker. */
-  [data-mobile-nav="frame"][data-aionui-preview-open] [data-mobile-nav="preview-full-toggle"] {
+  body:has([data-mobile-nav="frame"][data-aionui-preview-open]) [data-mobile-nav="preview-full-toggle"] {
     display: inline-flex !important;
   }
   [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
     display: none !important;
   }
-  [data-mobile-nav="frame"][data-mobile-preview-full] [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-in {
+  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-in {
     display: none !important;
   }
-  [data-mobile-nav="frame"][data-mobile-preview-full] [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
+  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
     display: inline !important;
   }
   /* Fullscreen preview: the sheet fills the whole viewport (notch included);
@@ -772,12 +772,12 @@ export const MOBILE_CSS = `
     z-index: 57 !important;
     animation: none !important;
   }
-  [data-mobile-nav="frame"][data-mobile-preview-full] [data-mobile-nav="preview-full-toggle"] {
+  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] {
     top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
   }
   /* Drawer open: the toggle rides along with the preview sheet. Must come
      after the open-marker visible rule (same specificity — later wins). */
-  [data-mobile-nav="frame"]:not([data-sidebar-collapsed]) [data-mobile-nav="preview-full-toggle"] {
+  body:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])) [data-mobile-nav="preview-full-toggle"] {
     visibility: hidden !important;
     display: none !important;
   }
