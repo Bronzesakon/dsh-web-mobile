@@ -288,7 +288,7 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
      one-row attempt had no scroll affordance and silently cut the last
      tab off; the thin scrollbar IS the affordance. Scoped to the frame
      marker: the desktop dialog keeps its official vertical nav column. */
-  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child [class$="_navList"] {
+  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])) > :first-child [class$="_navList"] {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;

@@ -82,7 +82,7 @@ export const MISC_CSS = `  /* ---------- hero composer on mobile ----------
      a higher-specificity full-width rule above, so repeat its selector here
      to win; the generic export/other-modal rule is covered by the second
      selector. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])),
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])),
   [aria-modal="true"]:not(:has(> :first-child > :last-child > button)) {
     left: 0 !important;
     right: 0 !important;
