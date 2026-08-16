@@ -175,6 +175,12 @@ export function apply(ctx: ClientContext): void {
         // The status row lives inside the composer stack; message-area
         // blocks can also mention turns/steps and must be skipped.
         if (root.closest('[class$="_composerStack"]') === null) continue
+        // The todo plan strip also lives in the composer stack and its root
+        // ends in _root. Its items may legitimately contain "步"/"steps" in
+        // their text, so never mistake it (or any interactive dock panel)
+        // for the stats strip.
+        if (root.matches('[data-testid="todo-panel"]')) continue
+        if (root.querySelector('button') !== null) continue
         const text = root.textContent ?? ''
         if (!/(turns|steps|\bLLM\b|轮|步)/.test(text)) continue
         if (root.querySelector('textarea') !== null) continue
