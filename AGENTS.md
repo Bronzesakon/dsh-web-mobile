@@ -36,10 +36,11 @@
   - `src/client/MobileNavOverlay.tsx`：维护 `data-mobile-nav="frame"`，导航关闭启发式。
   - `src/client/MobileNavToggle.tsx`：会话头部控件。
   - `src/client/MobileDrawerFooter.tsx`：抽屉底部操作。
-  - `src/client/mobile.css.ts`：全部移动端样式（TS 模板字符串，`<style data-plugin>` 注入）。
+  - `src/client/styles/`：全部移动端样式，拆为 `base/layout/compat/misc.css.ts` + `index.ts`（导出 `MOBILE_CSS` = 四者按序 `join('\n')`，注入为单一 `<style data-plugin>`）。拆分是纯搬移：组件文件**不要手改 CSS 内容**，用切片脚本按原字节序切（见下 Pitfall「styles/ 按节切片」）。
+  - `src/client/effects/`：客户端 effect，按域拆 3 文件（phone-chrome / aionui-compat / stats-line）；`index.tsx` 只做编排（locale、样式注入、install 调用、slot 注册）。
   - `src/client/locales.ts`：`mobileNav` i18n；`zh` 是 key 源真相，`en` 是类型镜像。
   - `scripts/build-client.mjs`：自定义打包器。
-- 构建流程：client tsc 输出到 `.client-build/`，`build-client.mjs` 把相对模块内联成 `window.__ModuleLoader__.load({...})` 并写入 `lib/client.js`，平台模块保留 `require()`；随后删除 `.client-build/` 和 `lib/client.js.map`。
+- 构建流程：client tsc 输出到 `.client-build/`，`build-client.mjs` 把相对模块内联成 `window.__ModuleLoader__.load({...})` 并写入 `lib/client.js`，平台模块保留 `require()`；随后删除 `.client-build/` 和 `lib/client.js.map`。**bundle 支持递归内联 `styles/` 子目录模块**（`require` 按宿主模块目录解析到规范相对路径，再改写进扁平 `__modules` map；运行时 `__localRequire` 不变）。
 - 布局驱动：`data-mobile-nav="frame"` + `data-sidebar-collapsed`；移动端 CSS 在 `(max-width: 1023px)` 生效，桌面端 `(min-width: 1024px)` 隐藏所有 mobile 控件。
 - 第三方兼容（dsh-web-ui-all、dshmarket、dsh-usage-stats）通过 DOM 标记 `data-aionui-*`、`MutationObserver`、后缀类选择器/文本锚点实现，不改第三方源码。
 
@@ -50,7 +51,7 @@
 - i18n：新增 key 先加 `zh`，再在 `en` 加同 key 镜像；`MobileNavKey` 从 `zh` 推导。
 - 客户端导入纯净性：跨 DSH 包的 SlotMap/Context 类型增强只用 type-only import；运行时只导入平台模块（React、primitives、slots 等）。
 - 不要手改 `lib/`；构建产物入库，修改 `src/` 后 `pnpm build` 并提交 `lib/`。
-- 提交信息用 conventional 前缀：`feat(mobile):`、`fix(mobile):`、`docs:`、`chore:`。
+- 提交信息用 conventional 前缀：`feat(mobile):`、`fix(mobile):`、`refactor(mobile):`、`docs:`、`chore:`。
 - 桌面端必须保持 no-op：新增样式/逻辑要确保 ≥1024px 不改变 UI。
 
 ## Pitfalls
@@ -78,7 +79,9 @@
   - 行匹配正确写法：`[class*="_treeRow"]`（子串匹配，覆盖裸/选中/拖拽所有状态；在 `[data-aionui-explorer-col]` 作用域内无其他含该子串的类）。
   - **箭头匹配必须排除叶子标记**：文件行也渲染箭头 span，其类是 `-NprXq_treeArrowEmpty`（仍含 `_treeArrow` 子串）——裸 `[class*="_treeArrow"]` 会把**所有行**当目录、预览永不弹出（697f911 的回归，用户实测发现）。正确写法：`[class*="_treeArrow"]:not([class*="_treeArrowEmpty"])`。
   - 教训：验证选择器时合成行必须**逐字复刻真实结构**（文件行 = 行类 + `_treeArrowEmpty` 子元素；目录行 = 行类 + `_treeArrow[Open]` 子元素），只测「无箭头子元素的裸行」会漏掉回归——697f911 就是这么翻车的。
-- 从 `mobile.css.ts` 抽 CSS 做复现时：① 模板起点用 `indexOf('`', indexOf('export const MOBILE_CSS ='))`，直接 `indexOf('`')` 会命中文件头注释里的反引号；② 注释里不能写反引号（会把模板字符串截断成 TS 语法错误）；③ 注释必须完整保留，截断的 `/*` 会让 CSS 解析器把下一条规则整条吞掉（invalid selector 错误恢复）。
+- 抽 CSS 做复现时：`MOBILE_CSS` 由 `src/client/styles/index.ts` 按 base → layout → compat → misc 拼接——直接读对应 `styles/*.css.ts` 的模板内容拼接即可，不必解析 bundle；注释里不能写反引号（会截断模板字符串成 TS 语法错误）、注释必须完整保留（截断的 `/*` 会让 CSS 解析器吞掉下一条规则）这两条仍适用。
+- **styles/ 按节切片（2026-08-16 拆分心得）**：把 `mobile.css.ts`（现已拆到 `src/client/styles/`）按主题节切片时，各节分隔是**空行 `\n\n` + 下一个 marker 的起始行**；其中 `/* dsh-web-ui family */`、`/* hero composer */` 两个 marker 是**缩进**在 `@media` 块内的（行首有两空格）。切片脚本若用「当前节 end -= 2 + 下节 start = marker 偏移」（去掉空行、下节不带头空格）会丢字节导致 round-trip 不匹配。正确做法：取 `css.lastIndexOf('\n', markerPos) + 1` 作为 marker **所在行的行首**（含缩进）当下节 start，当前节 `end = 下节行首 - 1`（保留一个尾部 `\n`），再用 `join('\n')` 把单 `\n` 补回原来空行的两个 `\n` —— 可证明字节往返一致；生成后务必跑 `node $TMPDIR/split-css.mjs` 的自检 `SPLIT OK`。
+- **`build-client.mjs` 的扁平→递归（2026-08-16 修）**：该 bundler 原先对 `.client-build/` 只做**扁平** `readdir`。把 CSS 放进 `src/client/styles/`（子目录）后 tsc 会 emit 出 `.client-build/styles/*.js`，`index.js` 的 `require("./styles/index.js")` 在扁平 map 里找不到 → 构建直接 `TypeError` 崩溃。已修成**递归收集 + 按宿主模块目录把 `require("./x.js")` 解析/改写为规范相对路径**（如 `styles/base.css.js`），运行时 `__localRequire` 不变。以后往 `src/client/` 加子目录模块是安全的；若未来恢复为扁平，需注意此限制。
 - **整块替换 CSS/代码前先确认替换区间边界**：用脚本按起止标记替换大块时，区间内的独立规则会一起被吞（1779cd4 事故：重写 toggle 块把「全屏几何规则」删了，功能表现为「标记/图标正常切换但浮层不变全屏」）。改完必须 grep 关键选择器/属性（如 `inset: 0`）确认没丢规则；这类回归用户实测前难以察觉。
 - 2026-08-16「手机全屏 md」事故真相：全屏内容 = 会话消息里的 GenUI（dsh-ui fence）卡片（「当前结构」表格），不是任何文件/预览。当前 bundle + 当前 genui CSS 均无全屏渲染路径（aionui 列是底部浮层且被门控、genui block/panel 无 fixed 规则）→ 手机端再复现时先抓 URL 栏：裸文件页 = 浏览器导航到了文件 URL；有 app UI = 旧 JS 缓存。别凭截图猜「旧 bundle」。
 - **用户手机浏览器是 Via（WebView 内核 + 激进缓存，会无视 `cache-control: no-cache`）**：旧 HTML/资源会被固化 →「怎么刷新都跳不过、清缓存才好、重建 bundle（rev 变化触发整页重载）后也消失」。诊断此类问题用 `?mobile-nav-debug=1` 徽章（提交 2300b82）：右上角实时显示 URL/宽高/媒体查询/头部/composer/aionui 浮层/genui 数量/捕获的 JS 错误。**未复现时不要重建 bundle**——重建会冲掉手机端卡死状态，反而不利于取证。
