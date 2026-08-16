@@ -275,10 +275,17 @@ export function apply(ctx: ClientContext): void {
   // footer on mobile (the header capsule is hidden by CSS); the drawer
   // footer also hosts the Files action that opens the dsh-web-ui explorer
   // sheet.
+  //
+  // Footer stacking relies on the list-slot sort by (priority, order):
+  // dsh-remote-web-ui leaves it unset (default 0, its two icon buttons stay
+  // on top) and dsh-usage-stats uses 10. Order 5 keeps the Files + Session
+  // log pills directly under the icon row with the usage/balance badge
+  // below them — instead of a tie at 10 where registration order could
+  // wedge the badge between the icons and the pills.
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
     name: 'sidebar.footer.action',
     id: 'mobile-nav-session-log',
-    order: 10,
+    order: 5,
     locale: NS,
     inject: () => ({
       downloadSessionLog: (sessionId: string) => ctx.sessionLogDownload.download(sessionId),
