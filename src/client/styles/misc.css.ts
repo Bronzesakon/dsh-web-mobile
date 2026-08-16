@@ -52,6 +52,23 @@ export const MISC_CSS = `  /* ---------- hero composer on mobile ----------
   [data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor] {
     order: -1 !important;
   }
+  /* Mobile tap target + feedback for the branch chip (git-graph, 24px
+     desktop spec). Two real-world problems: ① the chip is tiny and sits
+     right above the expandable todo card — mis-taps land on the todo card;
+     ② opening the popover waits for the host's /git/branches round-trip
+     (~700ms on device) with zero feedback, so users tap again and toggle
+     the popover closed. Enlarge the target, kill double-tap zoom delay,
+     and give an instant pressed state so a tap reads as registered. */
+  [data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor] [data-gitgraph-chip] {
+    touch-action: manipulation !important;
+    min-height: 34px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+  [data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor] [data-gitgraph-chip]:active {
+    transform: scale(.96) !important;
+    transition: transform .12s !important;
+  }
 }
 
 /* ---------- tablet / wide mobile: keep sheets from becoming full-width ----------
