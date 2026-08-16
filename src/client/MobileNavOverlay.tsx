@@ -176,6 +176,40 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     }
   }, [mobile, t])
 
+  // Move the git branch chip (conversation.input.dock) INTO the composer
+  // card on mobile: it reads as a stray capsule floating between the dock
+  // rows and the input card. Reparenting into the card lets CSS pin it to
+  // the card's top-left (the card is position: relative) and give the card
+  // a chip row via padding-top. The dock's React re-render restores the
+  // chip to the dock, so a MutationObserver re-appends idempotently (same
+  // pattern as the preview fullscreen toggle above). When the viewport
+  // widens, cleanup moves the chip back to the dock — the desktop layout
+  // is untouched.
+  useEffect(() => {
+    if (!mobile) return
+    let observer: MutationObserver | null = null
+    const ensure = (): void => {
+      const chip = document.querySelector(
+        '[data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor]',
+      )
+      if (chip === null) return
+      const card = document.querySelector('textarea')?.closest('[class$="_card"]')
+      if (card == null) return
+      if (chip.parentElement !== card) card.insertBefore(chip, card.firstChild)
+    }
+    ensure()
+    observer = new MutationObserver(ensure)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => {
+      observer?.disconnect()
+      const chip = document.querySelector(
+        '[data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor]',
+      )
+      const dock = document.querySelector('[data-slot="conversation.input.dock"]')
+      if (chip !== null && dock !== null && chip.parentElement !== dock) dock.appendChild(chip)
+    }
+  }, [mobile])
+
   if (!mobile) return null
   return (
     <>

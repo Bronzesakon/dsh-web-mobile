@@ -482,4 +482,35 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
     margin-left: 0 !important;
     padding-left: 4px !important;
   }
+
+  /* ---------- git-graph branch chip: inside the composer card ----------
+     The branch chip (conversation.input.dock) floats between the dock rows
+     and the input card; on a phone it reads as a stray capsule crowding the
+     composer. A client effect (MobileNavOverlay) reparents the chip INTO
+     the composer card; these rules pin it to the card's top-left and give
+     the card a dedicated chip row. The card is position: relative by the
+     official stylesheet, so the absolute anchor resolves against it. The
+     plugin's own sheet sets all four offsets on the anchor, so right/bottom
+     must be neutralized too. Scope is the frame marker + the anchor
+     attribute (NOT the dock slot — the reparenting moves the chip out of
+     the dock's subtree). Desktop untouched: the frame marker only exists
+     below 1024px, and the effect restores the chip to the dock when the
+     viewport widens. Chip row geometry (2026-08-16, user feedback): 48px
+     padding left a 16px dead gap between the chip and the input line and
+     made the composer read too tall; the row is now 40px = chip (24px) at
+     top 12px + ~4px to the textarea — the chip sits slightly lower and
+     the gap is compressed without touching the official height budget
+     further. */
+
+  [data-mobile-nav="frame"] [data-gitgraph-chip-anchor] {
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1 !important;
+  }
+  [data-mobile-nav="frame"] [class$="_card"]:has([data-gitgraph-chip-anchor]) {
+    padding-top: 40px !important;
+  }
 `

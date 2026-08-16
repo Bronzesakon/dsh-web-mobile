@@ -162,24 +162,29 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
      squeezes the agent-permission pill (modes) down to 15px: the pill's
      chevron then overflows on top of the model name. Let the permission
      pill keep its natural width and let the model pill shrink instead.
-     Anchored by the composer card (:has(textarea)): row = last child,
-     tools = first child, permission pill = its 2nd child, model pill =
-     row's last child. */
+     Anchored by the composer card (:has(textarea)): row = the _row class
+     containing a _trailing group, tools = its first child, permission pill
+     = its 2nd child, model pill = the _trailing group.
+     NOTE: do NOT anchor these by the card's :last-child — a client effect
+     moves the git-graph branch chip INTO the card, which becomes the card's
+     new last child and silently disables every :last-child rule (the model
+     pill then falls back to the official fixed layout and long model IDs
+     overflow instead of ellipsizing). Structural anchors only. */
   /* The official row pads every group with 12px gaps, which on a phone eats
      width the model pill needs for the full model ID. Tighten the row to 8px
      gaps (the modes pill keeps its natural width) so the model name gets
      every spare pixel. */
-  [data-phase] [class*="_card"]:has(textarea) > :last-child {
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) {
     gap: 8px !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child {
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child {
     gap: 8px !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) > :last-child > :first-child > :nth-child(2) {
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) {
     flex: 0 0 auto !important;
     gap: 8px !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) > :last-child > :last-child {
+  [data-phase] [class*="_card"]:has(textarea) [class$="_trailing"] {
     flex: 1 1 auto !important;
     gap: 8px !important;
     min-width: 0 !important;
