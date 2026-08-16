@@ -1,6 +1,12 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 
-/** 官方会话状态行（turns / steps / LLM time / TPS）hashed class 标记，让样式表可横向铺开。 */
+  // The official conversation status row (turns / steps / LLM time / TTFT /
+  // cache) has a hashed class, so the stylesheet cannot target it directly.
+  // Mark the exact row on narrow screens by text: a [class$=_root] that
+  // carries the metrics text and no textarea (the composer card also ends in
+  // _root and can mention turns in its model line). The CSS then lays the
+  // marked row out as ONE horizontally scrolling line with every metric
+  // reachable.
 export function installStatsLine(ctx: ClientContext): void {
   ctx.effect(() => {
     // Arm on the CURRENT width and re-arm on every width change (see the
