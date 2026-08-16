@@ -1,8 +1,8 @@
 # dsh-web-mobile
 
-DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录变为 overlay 抽屉,会话区独占全宽;768–1023px 平板/宽幅移动端对弹窗与浮层做限宽居中;桌面端(≥1024px)保持与未安装时一致。纯 client 插件。
+尽可能的使dsh适配竖屏等移动端设备
 
-[![Release v0.2.0](https://img.shields.io/badge/release-v0.2.0-5B4CF0?style=flat-square)](package.json)
+[![Release v1.0.0](https://img.shields.io/badge/release-v1.0.0-5B4CF0?style=flat-square)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0B7285?style=flat-square)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Web%20Profile-5B4CF0?style=flat-square)](cordis.patch.yml)
 
@@ -30,9 +30,37 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 - **抽屉导航判定**:点会话行本体切换会话并收起抽屉;行内按钮(三点菜单等)不触发收起;
 - **文件树 / 预览浮层**:dsh-web-ui 的 Explorer 与 Preview 在手机上变为圆角底部浮层(文件树底部与输入框对齐),每次打开带滑入动画;预览浮层右上角缩放/收起按钮可正常关闭;
 - **平板 / 宽幅移动端**:768–1023px 下设置弹窗与 Explorer/Preview 浮层不再铺满全宽,改为限宽居中,避免右侧大块空白;
-- **一步打开文件**:会话头部右侧新增文件夹按钮,点击直接开/关文件树,无需先开侧栏抽屉。
+- **一步打开文件**:会话头部右侧新增文件夹按钮,点击直接开/关文件树,无需先开侧栏抽屉;
+- **全屏预览**:预览浮层可一键放大到全视口——缩放按钮固定在浮层标题栏,刘海区域自动避让;关闭浮层或抽屉时自动还原;
+- **设置弹窗重构**:分类标签收进单行横向滚动(细滚动条提示可滚动),顶部工具栏并入标签行共用一行,手机上隐藏「打开配置文件」按钮;
+- **分支胶囊**:git 分支芯片移入输入卡片内(todo 卡片上方),点击目标加大并带按压反馈;
+- **会话头部紧凑**:模式徽标在窄处省略、subagent 按钮居中,文件按钮固定保留;
+- **诊断徽章**:访问 `?mobile-nav-debug=1` 显示悬浮诊断条(URL/视口/媒体查询/浮层状态/JS 错误),手机端问题取证用。
 
 ## 更新日志
+
+### v1.0.0
+
+**新增 / 改进**
+
+- 全屏预览浮层:预览底部浮层可一键放大到全视口(标题栏缩放按钮,刘海安全区适配),关闭预览或抽屉时自动还原;
+- 设置弹窗重构:分类标签收进单行横向滚动(细滚动条提示),顶部工具栏并入标签行共用一行,手机上隐藏「打开配置文件」按钮,选项区显著变大;
+- 分支胶囊:git 分支芯片移入输入卡片(todo 卡片之上),点击目标加大、按压即时反馈;
+- 会话头部紧凑与顺序稳定:模式徽标窄处省略、subagent 按钮居中、文件按钮固定保留;
+- 抽屉底部顺序:文件浏览 / 导出会话日志 固定在用量徽章之上;
+- 模型 ID 完整显示:composer 行内有空间时不再省略;
+- 文件树 / 预览交互:仅文件行可打开预览(目录行不再误弹缓存预览)、已选中行可重开、折叠按钮可靠关闭、预览打开时文件树自动让位;
+- 诊断徽章:`?mobile-nav-debug=1` 实时显示 URL/视口/媒体查询/浮层/JS 错误,默认 no-op。
+
+**修复**
+
+- 目录选择器被设置弹窗规则劫持(issue #12):点笔形「编辑」进入手动输入后弹窗被顶到屏幕顶部、路径输入框被隐藏——目录选择器不再命中移动端设置适配规则;
+- 预览浮层全屏几何规则回归(1779cd4)以及关闭后全屏标记残留;
+- 抽屉底部徽章平票错序;subagent 弹层小屏溢出;统计栏误标 todo 面板。
+
+**内部**
+
+- CSS 按主题拆为 `src/client/styles/`(base / layout / compat / misc),client effects 拆分为独立模块;构建器支持子目录递归内联。
 
 ### v0.2.0
 
@@ -55,6 +83,7 @@ DeepSeek Harness Web UI 移动端适配:窄屏(< 1024px)隐藏左侧 rail,目录
 - [dsh-web-ui 全家桶](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)(文件树 / 预览 / 任务看板 / SSH / 宠物 / 会话统计 / 远程配对 / 设置)——**0.1.14**
 - [dshmarket](https://www.npmjs.com/package/dshmarket)(插件市场,搜索框换行全宽)——**1.2.2**
 - [dsh-usage-stats](https://github.com/Ychris12138/dsh-usage-stats)(用量与余额)——**0.1.2**
+- [dsh-genui](https://github.com/omdsh-dev/dsh-genui)(GenUI 内联组件 / 面板 dock)——**0.8.3**
 
 ## 安装
 

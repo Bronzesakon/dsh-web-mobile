@@ -63,7 +63,7 @@
 - composer 模型 pill（issue #9，2026-08-16 修）：`_triggerLabel` 必须保持 `flex: 1 1 auto` + `min-width: 0`（在 `> [class$="_trigger"]` 规则之后），否则 pill 拉伸时多余宽度闲置在 chevron 之后、label 拿不到。省略点是自适应的：行内有空间就显示完整模型 ID，空间不足才在极限处省略。默认模型名（~182px @13px）完整显示需视口 ≥~415px；390px 手机必然省略（物理放不下），用户报「宽度足够」时先确认实际模型 ID 长度。行间距用 8px（12px 会把 label 挤出 ~14px）。
 - 抽屉点击关闭规则：忽略会话行内按钮（kebab 等）和 `[aria-modal="true"]` 模态；Escape 处理让位于模态。
 - CSS 依赖 `:has()`（Chromium 105+），并遵循 `prefers-reduced-motion`。
-- 为第三方插件做兼容时按 README 列出的精确版本验证（`dsh-web-ui-all` 0.1.14、`dshmarket` 1.2.2、`dsh-usage-stats` 0.1.2）；选择器保持作用域，避免影响桌面端。
+- 为第三方插件做兼容时按 README 列出的精确版本验证（`dsh-web-ui-all` 0.1.14、`dshmarket` 1.2.2、`dsh-usage-stats` 0.1.2、`@omdsh-dev/dsh-genui` 0.8.3）；选择器保持作用域，避免影响桌面端。
 - 抽屉底部顺序由 `sidebar.footer.action` list 槽的 `(priority, order)` 升序决定：`dsh-remote-web-ui` 不设 order（默认 0，听筒+下载图标行在最上）、`dsh-usage-stats` 用 10（用量/余额徽章）。mobile-nav 该注册必须用 `order: 5`：若同为 10 会平票按注册顺序，徽章会插到「文件浏览/导出会话日志」之上（2026-08-16 修过）。
 - 抽屉 footer 按钮渲染成 ~3 倍高（约 100px）或行距出现 40~128px 不规则间隙时，先怀疑手机浏览器加载了旧 bundle / 残留 style 标签（当前 CSS 是 34px 按钮 + 6~8px 间距）；对比 `curl -s http://127.0.0.1:3080/ | grep -o 'dsh-mobile-nav/client.js?rev=…'` 的 rev 与服务端文件，强刷/重开页面验证后再改代码。
 - **bundle 永远是最新的**：`/plugins/<id>/client.js` 响应带 `cache-control: no-cache` 且无 validators，服务端对任意 rev 查询都读当前 lib 文件 → 手机上的「旧行为」只可能来自激进缓存/长活 tab（整页 HTML/JS 被浏览器缓存），服务端无法下发旧 bundle。排查手机端时先让用户强刷 + 清站点数据，而不是改代码。**rev 核对方法（2026-08-16 验证）**：`sha1sum lib/client.js` 的前 12 位 = 页面 `client.js?rev=` 的值（rev 就是 lib 文件内容 SHA-1 前缀）。
