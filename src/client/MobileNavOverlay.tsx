@@ -129,34 +129,50 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     return () => document.removeEventListener('click', onDrawerClick, true)
   }, [mobile, open, toggleSidebar])
 
-  // Fullscreen toggle for the aionui preview sheet. It must paint ABOVE the
-  // sheet: the shell overlay layer is its own stacking context (absolute +
-  // z-index 20), so a button rendered inside it would be covered by the
-  // sheet (z-index 56). Render it imperatively at the body level instead —
-  // no react-dom portal needed, and the CSS keys its visibility off the
-  // frame markers via body:has(). Clicking toggles the frame's
-  // `data-mobile-preview-full` marker; the two SVG icons swap via CSS.
+  // Fullscreen toggle for the aionui preview sheet. The button is appended
+  // INTO the preview column (position: absolute against it), so it rides
+  // the sheet's own motion — open animation, geometry transition — locked
+  // by construction instead of matching transition curves, and it hides
+  // with the sheet automatically. The suite's React re-renders the column
+  // content, so a MutationObserver re-appends the button whenever it is
+  // wiped. (The sheet is z-index 56, above the overlay layer's z-20
+  // stacking context, so a button inside the sheet is never covered.)
+  // Clicking toggles the frame's `data-mobile-preview-full` marker; the
+  // two SVG icons swap via CSS.
   useEffect(() => {
     if (!mobile) return
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.dataset.mobileNav = 'preview-full-toggle'
-    button.setAttribute('aria-label', t('previewFullscreen'))
-    button.title = t('previewFullscreen')
-    button.innerHTML = [
-      '<svg class="dsh-mobile-nav-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">',
-      '<path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-      '</svg>',
-      '<svg class="dsh-mobile-nav-full-out" viewBox="0 0 16 16" fill="none" aria-hidden="true">',
-      '<path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-      '</svg>',
-    ].join('')
-    const onClick = () => findFrame()?.toggleAttribute('data-mobile-preview-full')
-    button.addEventListener('click', onClick)
-    document.body.appendChild(button)
+    let button: HTMLButtonElement | null = null
+    let observer: MutationObserver | null = null
+    const onClick = (): void => {
+      findFrame()?.toggleAttribute('data-mobile-preview-full')
+    }
+    const ensure = (): void => {
+      const col = document.querySelector('[data-aionui-preview-col]')
+      if (col === null) return
+      if (button === null) {
+        button = document.createElement('button')
+        button.type = 'button'
+        button.dataset.mobileNav = 'preview-full-toggle'
+        button.setAttribute('aria-label', t('previewFullscreen'))
+        button.title = t('previewFullscreen')
+        button.innerHTML = [
+          '<svg class="dsh-mobile-nav-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">',
+          '<path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+          '</svg>',
+          '<svg class="dsh-mobile-nav-full-out" viewBox="0 0 16 16" fill="none" aria-hidden="true">',
+          '<path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+          '</svg>',
+        ].join('')
+        button.addEventListener('click', onClick)
+      }
+      if (button.parentElement !== col) col.appendChild(button)
+    }
+    ensure()
+    observer = new MutationObserver(ensure)
+    observer.observe(document.body, { childList: true, subtree: true })
     return () => {
-      button.removeEventListener('click', onClick)
-      button.remove()
+      observer.disconnect()
+      button?.remove()
     }
   }, [mobile, t])
 

@@ -678,7 +678,8 @@ export const MOBILE_CSS = `
       width .24s var(--ds-ease-out, ease-in-out),
       height .24s var(--ds-ease-out, ease-in-out),
       border-radius .24s var(--ds-ease-out, ease-in-out),
-      box-shadow .24s var(--ds-ease-out, ease-in-out) !important;
+      box-shadow .24s var(--ds-ease-out, ease-in-out),
+      padding-top .24s var(--ds-ease-out, ease-in-out) !important;
   }
   /* User-opened preview sheet (frame marker, set on file-row tap). */
   [data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-preview-col] {
@@ -718,87 +719,73 @@ export const MOBILE_CSS = `
      when the frame carries "data-mobile-preview-full" the sheet goes
      fullscreen and the button moves to the viewport corner. */
   [data-mobile-nav="preview-full-toggle"] {
-    position: fixed !important;
-    right: 46px !important;
-    top: calc(100dvh - 40px - min(50dvh, 420px) + 6px) !important;
+    position: absolute !important;
+    right: 36px !important;
+    top: 8px !important;
     z-index: 57 !important;
     display: none !important;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: none;
-    border-radius: 6px;
-    background: var(--aion-bg-2, rgba(0, 0, 0, .12));
+    border-radius: 4px;
+    background: transparent;
     color: var(--aion-text-secondary, var(--dsw-alias-label-secondary, inherit));
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    /* Follow the sheet titlebar between sheet and corner smoothly. */
-    transition: top .24s var(--ds-ease-out, ease-in-out);
+    /* Native look: same size/radius/hover language as the suite's tab-bar
+       icon buttons (the 20px panelCollapse next to it). The button lives
+       INSIDE the preview column, so it rides the sheet's own open
+       animation and geometry transition — no curve matching needed. */
+    transition: background-color .15s, top .24s var(--ds-ease-out, ease-in-out);
   }
   [data-mobile-nav="preview-full-toggle"]:hover {
     background: var(--aion-bg-3, rgba(0, 0, 0, .22));
+  }
+  [data-mobile-nav="preview-full-toggle"]:active {
+    background: var(--aion-bg-active, rgba(0, 0, 0, .28));
   }
   [data-mobile-nav="preview-full-toggle"]:focus-visible {
     outline: 2px solid var(--dsw-alias-state-business-primary, #4f6ef7);
     outline-offset: 2px;
   }
   [data-mobile-nav="preview-full-toggle"] svg {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
   }
   /* Keep the last tab (and the "+" URL-tab trigger) from sliding under the
      fullscreen toggle: reserve the right end of the preview tab row. */
   [data-aionui-preview-col] [class$="_tabScroll"] {
     padding-right: 34px !important;
   }
-  /* Hidden unless the preview sheet is open; the two icons swap on the frame
-     fullscreen marker. */
-  body:has([data-mobile-nav="frame"][data-aionui-preview-open]) [data-mobile-nav="preview-full-toggle"] {
+  /* Visible only while the preview sheet is open. Visibility itself is
+     inherited from the column, so the sheet's own hide rules (collapse,
+     drawer open) cover the button too. */
+  [data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] {
     display: inline-flex !important;
   }
+  /* Icon swap on the frame fullscreen marker. */
   [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
     display: none !important;
   }
-  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-in {
+  [data-mobile-nav="frame"][data-mobile-preview-full] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-in {
     display: none !important;
   }
-  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
+  [data-mobile-nav="frame"][data-mobile-preview-full] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
     display: inline !important;
   }
-  /* Fullscreen preview: the sheet fills the whole viewport (notch included);
-     the safe-area padding drops the titlebar row below the status bar, and
-     the toggle follows the titlebar into the top corner. */
-  [data-mobile-nav="frame"][data-aionui-preview-open][data-mobile-preview-full] [data-aionui-preview-col] {
-    inset: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100dvh !important;
-    max-height: none !important;
-    box-sizing: border-box !important;
-    padding-top: env(safe-area-inset-top, 0px) !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    z-index: 57 !important;
-    animation: none !important;
-  }
-  body:has([data-mobile-nav="frame"][data-mobile-preview-full]) [data-mobile-nav="preview-full-toggle"] {
-    top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
-  }
-  /* Drawer open: the toggle rides along with the preview sheet. Must come
-     after the open-marker visible rule (same specificity — later wins). */
-  body:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])) [data-mobile-nav="preview-full-toggle"] {
-    visibility: hidden !important;
-    display: none !important;
+  /* Fullscreen: the column fills the viewport, so the button follows the
+     titlebar row down below the notch. */
+  [data-mobile-nav="frame"][data-mobile-preview-full] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] {
+    top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
   }
   @media (prefers-reduced-motion: reduce) {
     [data-aionui-preview-col],
     [data-mobile-nav="preview-full-toggle"] {
       transition: none !important;
+      animation: none !important;
     }
   }
 
