@@ -402,31 +402,41 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :first-child {
     display: none !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :last-child {
+  /* The tab list scrolls in the space left by the toolbar: the toolbar
+     (config file + close) is reparented INTO this nav row by a client
+     effect (MobileNavOverlay), so the tab list must be anchored by its
+     class, NOT by :last-child (the reparented toolbar becomes the nav's
+     new last child). */
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child [class$="_navList"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
-    width: 100% !important;
     gap: 6px !important;
     overflow: visible !important;
   }
-  /* Content toolbar (Open configuration file + close): group both controls
-     flush to the right edge — spread-to-edges left a ~144px dead gap
-     between them on a phone (user feedback 2026-08-16). The toolbar
-     children carry official auto-margins that would defeat flex-end, so
-     neutralize them. The close button gets a round tappable base so it
-     reads as its own control, not part of the outline button. */
-  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child {
+  /* Content toolbar (Open configuration file + close): grouped flush to
+     the right edge, and reparented INTO the nav row on mobile so it shares
+     one line with the tabs (user feedback 2026-08-16 — the toolbar's own
+     row left a full-width dead gap under the tabs). Anchored by class: the
+     header leaves the content subtree, so :first-child/:last-child anchors
+     would now hit the options area. Children carry official auto-margins
+     that would defeat flex-end, so neutralize them. The close button gets
+     a round tappable base so it reads as its own control, not part of the
+     outline button. */
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) [class$="_header"] {
+    flex: 0 0 auto !important;
     justify-content: flex-end !important;
     align-items: center !important;
     gap: 8px !important;
-    padding: 0 12px !important;
+    padding: 0 0 0 4px !important;
     min-height: 40px !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child > * {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) [class$="_header"] > * {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :last-child > :first-child > :last-child {
+  [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) [class$="_header"] > :last-child {
     width: 32px !important;
     height: 32px !important;
     border-radius: 50% !important;

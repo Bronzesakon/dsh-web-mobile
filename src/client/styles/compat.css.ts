@@ -288,7 +288,7 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
      one-row attempt had no scroll affordance and silently cut the last
      tab off; the thin scrollbar IS the affordance. Scoped to the frame
      marker: the desktop dialog keeps its official vertical nav column. */
-  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child > :last-child {
+  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])) > :first-child [class$="_navList"] {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -297,6 +297,18 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
     width: 100% !important;
     scrollbar-width: thin !important;
     -webkit-overflow-scrolling: touch !important;
+  }
+  /* Hairline scrollbar for the tab row: the default WebKit scrollbar reads
+     fat on a phone; 2px keeps the scroll affordance without the bulk. */
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar {
+    height: 2px !important;
+  }
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-border-l2, rgba(0, 0, 0, .22)) !important;
+    border-radius: 1px !important;
+  }
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar-track {
+    background: transparent !important;
   }
   [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navCell"] {
     flex: 0 0 auto !important;
@@ -311,9 +323,13 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
     height: 14px !important;
     flex: none !important;
   }
-  /* Content toolbar: compact the "Open configuration file" button — on
-     device it renders oversized and alone on its row with dead space
-     around it. */
+  /* Content toolbar: the "Open configuration file" button is hidden on
+     mobile — it is rarely needed on a phone and steals ~180px from the
+     tab row's scroll area (user feedback 2026-08-16). Only the close ✕
+     stays, flush right in the nav row. Desktop untouched (frame scoped). */
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_header"] [class$="_actions"] {
+    display: none !important;
+  }
   [data-mobile-nav="frame"] [aria-modal="true"] [class$="_header"] [class$="_actions"] [class$="_action"] {
     font-size: 13px !important;
     padding: 6px 12px !important;

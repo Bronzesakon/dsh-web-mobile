@@ -210,6 +210,33 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     }
   }, [mobile])
 
+  // Settings dialog: move the toolbar (Open configuration file + close)
+  // INTO the nav row so it shares ONE line with the category tabs — the
+  // official layout gives the toolbar its own row under the tabs, which on
+  // a phone leaves a full-width dead gap and pushes the options area down
+  // (user feedback 2026-08-16). The toolbar is React-owned, so a
+  // MutationObserver re-appends idempotently (same pattern as the chip
+  // above). Desktop untouched: this effect only runs while the frame
+  // marker is active. The toolbar is anchored by its class suffix — the
+  // export dialog (header + description + body) has no nav row, so
+  // querying the nav first makes the move a no-op there.
+  useEffect(() => {
+    if (!mobile) return
+    let observer: MutationObserver | null = null
+    const ensure = (): void => {
+      const dialog = document.querySelector('[aria-modal="true"]')
+      if (dialog === null) return
+      const nav = dialog.querySelector(':scope > [class$="_nav"]')
+      const header = dialog.querySelector('[class$="_header"]')
+      if (nav === null || header === null) return
+      if (header.parentElement !== nav) nav.appendChild(header)
+    }
+    ensure()
+    observer = new MutationObserver(ensure)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer?.disconnect()
+  }, [mobile])
+
   if (!mobile) return null
   return (
     <>
