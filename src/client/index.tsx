@@ -165,8 +165,12 @@ export function apply(ctx: ClientContext): void {
         // the suite's hashed classes carry a hash prefix, so the exact-token
         // `class~=` form never matches and the trailing `$=` form misses
         // selected rows (`_treeRowSelected`) and open arrows
-        // (`_treeArrowOpen`) — both regressions of issue #8.
-        if (row.querySelector('[class*="_treeArrow"]') !== null) return
+        // (`_treeArrowOpen`) — regressions of issue #8. The arrow gate must
+        // additionally exclude the leaf marker: FILE rows render a
+        // `_treeArrowEmpty` span whose class still contains the `_treeArrow`
+        // substring, so a bare substring match would treat every row as a
+        // directory and no preview would ever open.
+        if (row.querySelector('[class*="_treeArrow"]:not([class*="_treeArrowEmpty"])') !== null) return
         frame()?.setAttribute('data-aionui-preview-open', '')
       }
       // The preview sheet's own collapse button (the two inward arrows in the
