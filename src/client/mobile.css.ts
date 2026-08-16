@@ -372,15 +372,17 @@ export const MOBILE_CSS = `
     top: 12px !important;
     z-index: 2 !important;
   }
-  /* The Files action sits at the FAR RIGHT of the header so it reads as a
-     distinct control from the directory toggle on the left (which opens
-     the history sidebar). */
+  /* The Files action sits at the right side of the header (headerActions is
+     the trailing flex group, so staying in-flow places it at the far right
+     when no popover trigger is present, and immediately left of jobs /
+     subagent triggers when they are). Unlike an absolutely-pinned button it
+     can never be covered or pushed out by those triggers. */
   [data-mobile-nav="files"] {
-    position: absolute !important;
+    position: static !important;
     left: auto !important;
-    right: 8px !important;
-    top: 12px !important;
-    z-index: 2 !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: auto !important;
   }
   /* Session log download: gone from the header row on mobile (the utilities
      seat holds only the session-log-export capsule). */
@@ -398,20 +400,6 @@ export const MOBILE_CSS = `
     left: auto !important;
     right: 0 !important;
   }
-  /* Our Files action is absolutely pinned to the far right by default; when
-     a header popover trigger (jobs / subagent) sits at the right edge, put
-     the Files action back into the headerActions flex flow so it appears
-     immediately left of that trigger instead of covering it (or being
-     hidden entirely). */
-  [data-phase] header:has([class$="_root"] > button[class$="_trigger"]) [data-mobile-nav="files"] {
-    position: static !important;
-    right: auto !important;
-    left: auto !important;
-    top: auto !important;
-    z-index: auto !important;
-    display: inline-flex !important;
-  }
-
   /* --- Settings dialog on mobile ---
      Desktop: 800px two-column flex (188px nav + content). Mobile: a
      near-full-width sheet — nav tabs wrap into rows on top, option rows
