@@ -79,6 +79,7 @@
   - **箭头匹配必须排除叶子标记**：文件行也渲染箭头 span，其类是 `-NprXq_treeArrowEmpty`（仍含 `_treeArrow` 子串）——裸 `[class*="_treeArrow"]` 会把**所有行**当目录、预览永不弹出（697f911 的回归，用户实测发现）。正确写法：`[class*="_treeArrow"]:not([class*="_treeArrowEmpty"])`。
   - 教训：验证选择器时合成行必须**逐字复刻真实结构**（文件行 = 行类 + `_treeArrowEmpty` 子元素；目录行 = 行类 + `_treeArrow[Open]` 子元素），只测「无箭头子元素的裸行」会漏掉回归——697f911 就是这么翻车的。
 - 从 `mobile.css.ts` 抽 CSS 做复现时：① 模板起点用 `indexOf('`', indexOf('export const MOBILE_CSS ='))`，直接 `indexOf('`')` 会命中文件头注释里的反引号；② 注释里不能写反引号（会把模板字符串截断成 TS 语法错误）；③ 注释必须完整保留，截断的 `/*` 会让 CSS 解析器把下一条规则整条吞掉（invalid selector 错误恢复）。
+- **整块替换 CSS/代码前先确认替换区间边界**：用脚本按起止标记替换大块时，区间内的独立规则会一起被吞（1779cd4 事故：重写 toggle 块把「全屏几何规则」删了，功能表现为「标记/图标正常切换但浮层不变全屏」）。改完必须 grep 关键选择器/属性（如 `inset: 0`）确认没丢规则；这类回归用户实测前难以察觉。
 - 2026-08-16「手机全屏 md」事故真相：全屏内容 = 会话消息里的 GenUI（dsh-ui fence）卡片（「当前结构」表格），不是任何文件/预览。当前 bundle + 当前 genui CSS 均无全屏渲染路径（aionui 列是底部浮层且被门控、genui block/panel 无 fixed 规则）→ 手机端再复现时先抓 URL 栏：裸文件页 = 浏览器导航到了文件 URL；有 app UI = 旧 JS 缓存。别凭截图猜「旧 bundle」。
 - **用户手机浏览器是 Via（WebView 内核 + 激进缓存，会无视 `cache-control: no-cache`）**：旧 HTML/资源会被固化 →「怎么刷新都跳不过、清缓存才好、重建 bundle（rev 变化触发整页重载）后也消失」。诊断此类问题用 `?mobile-nav-debug=1` 徽章（提交 2300b82）：右上角实时显示 URL/宽高/媒体查询/头部/composer/aionui 浮层/genui 数量/捕获的 JS 错误。**未复现时不要重建 bundle**——重建会冲掉手机端卡死状态，反而不利于取证。
 - 没有测试框架：改布局后需在真实 DSH web profile + 窄屏（约 390px）和桌面（≥1024px）手动验证。
