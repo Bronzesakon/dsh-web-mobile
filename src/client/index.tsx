@@ -148,6 +148,12 @@ export function apply(ctx: ClientContext): void {
         return
       }
       const frame = (): HTMLElement | null => document.querySelector('[data-mobile-nav="frame"]')
+      // Closing the preview sheet also drops the fullscreen marker, so the
+      // next preview starts in the sheet layout again.
+      const closePreview = (): void => {
+        frame()?.removeAttribute('data-aionui-preview-open')
+        frame()?.removeAttribute('data-mobile-preview-full')
+      }
       const onTap = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null
         if (target === null) return
@@ -169,7 +175,7 @@ export function apply(ctx: ClientContext): void {
         const target = event.target as HTMLElement | null
         if (target === null) return
         if (target.closest('[data-aionui-preview-col] [class$="_panelCollapse"]') !== null) {
-          frame()?.removeAttribute('data-aionui-preview-open')
+          closePreview()
         }
       }
       const sync = (): void => {
@@ -179,7 +185,7 @@ export function apply(ctx: ClientContext): void {
         // `data-aionui-preview-open` marker is present our stylesheet forces the
         // sheet visible with !important, so getComputedStyle() would never report
         // hidden and the marker would never be cleared.
-        if (pv.style.visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
+        if (pv.style.visibility === 'hidden') closePreview()
       }
       document.addEventListener('click', onTap, true)
       document.addEventListener('click', onCollapse, true)

@@ -57,6 +57,7 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     return () => {
       observer.disconnect()
       frame.removeAttribute('data-mobile-nav')
+      frame.removeAttribute('data-mobile-preview-full')
     }
   }, [mobile])
 
@@ -150,6 +151,30 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
           <IconPanelLeftOutline16 size={18} />
         </button>
       )}
+      {/* Fullscreen toggle for the aionui preview sheet. The CSS keeps it
+          hidden unless the preview sheet is open (frame marker
+          `data-aionui-preview-open`) and swaps its icon via the frame's
+          `data-mobile-preview-full` marker, so no React state is needed. */}
+      <button
+        type="button"
+        data-mobile-nav="preview-full-toggle"
+        aria-label={t('previewFullscreen')}
+        title={t('previewFullscreen')}
+        onClick={() => findFrame()?.toggleAttribute('data-mobile-preview-full')}
+      >
+        <svg className="dsh-mobile-nav-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4"
+            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+          />
+        </svg>
+        <svg className="dsh-mobile-nav-full-out" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4"
+            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+          />
+        </svg>
+      </button>
     </>
   )
 }
