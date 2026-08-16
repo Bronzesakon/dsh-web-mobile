@@ -125,6 +125,19 @@ export function apply(ctx: ClientContext): void {
       if (target.closest('[data-aionui-explorer-col] [class$="_treeRow"]') === null) return
       frame()?.setAttribute('data-aionui-preview-open', '')
     }
+    // The preview sheet's own collapse button (the two inward arrows in the
+    // tab bar) closes the AionUI store, but on mobile the suite's layout sync
+    // can be skipped while its shell-track mirror is not ready yet — in that
+    // case the inline visibility never flips to hidden and the visibility
+    // watcher below would never clear our marker. Clear it directly on the
+    // button click so the sheet always closes regardless of the suite's sync.
+    const onCollapse = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target === null) return
+      if (target.closest('[data-aionui-preview-col] [class$="_panelCollapse"]') !== null) {
+        frame()?.removeAttribute('data-aionui-preview-open')
+      }
+    }
     const sync = (): void => {
       const pv = document.querySelector<HTMLElement>('[data-aionui-preview-col]')
       if (pv === null) return
@@ -135,11 +148,13 @@ export function apply(ctx: ClientContext): void {
       if (pv.style.visibility === 'hidden') frame()?.removeAttribute('data-aionui-preview-open')
     }
     document.addEventListener('click', onTap, true)
+    document.addEventListener('click', onCollapse, true)
     const observer = new MutationObserver(sync)
     observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] })
     sync()
     return () => {
       document.removeEventListener('click', onTap, true)
+      document.removeEventListener('click', onCollapse, true)
       observer.disconnect()
     }
   }, 'dsh-mobile-nav: preview sheet open marker')
