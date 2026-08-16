@@ -776,6 +776,25 @@ export const MOBILE_CSS = `
   [data-mobile-nav="frame"][data-mobile-preview-full] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] .dsh-mobile-nav-full-out {
     display: inline !important;
   }
+  /* Fullscreen preview: the sheet fills the whole viewport (notch included);
+     the safe-area padding drops the titlebar row below the status bar, and
+     the toggle follows the titlebar into the top corner. */
+  [data-mobile-nav="frame"][data-aionui-preview-open][data-mobile-preview-full] [data-aionui-preview-col] {
+    inset: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    box-sizing: border-box !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    z-index: 57 !important;
+    animation: none !important;
+  }
   /* Fullscreen: the column fills the viewport, so the button follows the
      titlebar row down below the notch. */
   [data-mobile-nav="frame"][data-mobile-preview-full] [data-aionui-preview-col] [data-mobile-nav="preview-full-toggle"] {
