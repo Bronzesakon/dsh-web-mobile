@@ -667,6 +667,18 @@ export const MOBILE_CSS = `
     box-shadow: 0 -4px 28px rgba(0, 0, 0, .18) !important;
     z-index: 56 !important;
     animation: dsh-mobile-nav-sheet-up .24s var(--ds-ease-out, ease-in-out) !important;
+    /* Fullscreen toggle (issue #8): animate the geometry change instead of
+       snapping. visibility is deliberately not listed, so opening/closing
+       the sheet stays instant; the open/close keyframes own transform. */
+    transition:
+      left .24s var(--ds-ease-out, ease-in-out),
+      right .24s var(--ds-ease-out, ease-in-out),
+      top .24s var(--ds-ease-out, ease-in-out),
+      bottom .24s var(--ds-ease-out, ease-in-out),
+      width .24s var(--ds-ease-out, ease-in-out),
+      height .24s var(--ds-ease-out, ease-in-out),
+      border-radius .24s var(--ds-ease-out, ease-in-out),
+      box-shadow .24s var(--ds-ease-out, ease-in-out) !important;
   }
   /* User-opened preview sheet (frame marker, set on file-row tap). */
   [data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-preview-col] {
@@ -722,6 +734,8 @@ export const MOBILE_CSS = `
     color: var(--aion-text-secondary, var(--dsw-alias-label-secondary, inherit));
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    /* Follow the sheet titlebar between sheet and corner smoothly. */
+    transition: top .24s var(--ds-ease-out, ease-in-out);
   }
   [data-mobile-nav="preview-full-toggle"]:hover {
     background: var(--aion-bg-3, rgba(0, 0, 0, .22));
@@ -780,6 +794,12 @@ export const MOBILE_CSS = `
   body:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])) [data-mobile-nav="preview-full-toggle"] {
     visibility: hidden !important;
     display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-aionui-preview-col],
+    [data-mobile-nav="preview-full-toggle"] {
+      transition: none !important;
+    }
   }
 
   /* dsh-web-ui sidebar entries (task board / ssh) sit flush against each
@@ -906,11 +926,11 @@ export const MOBILE_CSS = `
     height: 32px !important;
     font-size: 13px !important;
   }
-  [data-aionui-explorer-col] [class$="_treeRow"] {
+  [data-aionui-explorer-col] [class*="_treeRow"] {
     height: 30px !important;
     font-size: 13px !important;
   }
-  [data-aionui-explorer-col] [class$="_treeRow"] svg {
+  [data-aionui-explorer-col] [class*="_treeRow"] svg {
     width: 14px !important;
     height: 14px !important;
   }

@@ -157,12 +157,16 @@ export function apply(ctx: ClientContext): void {
       const onTap = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null
         if (target === null) return
-        const row = target.closest('[data-aionui-explorer-col] [class$="_treeRow"]')
+        const row = target.closest('[data-aionui-explorer-col] [class*="_treeRow"]')
         if (row === null) return
         // Only FILE rows open the preview sheet. Directory rows toggle
         // expansion and must not pop the (possibly stale, restored-from-
-        // localStorage) preview tab over the tree.
-        if (row.querySelector('[class$="_treeArrow"]') !== null) return
+        // localStorage) preview tab over the tree. Substring matching:
+        // the suite's hashed classes carry a hash prefix, so the exact-token
+        // `class~=` form never matches and the trailing `$=` form misses
+        // selected rows (`_treeRowSelected`) and open arrows
+        // (`_treeArrowOpen`) — both regressions of issue #8.
+        if (row.querySelector('[class*="_treeArrow"]') !== null) return
         frame()?.setAttribute('data-aionui-preview-open', '')
       }
       // The preview sheet's own collapse button (the two inward arrows in the
