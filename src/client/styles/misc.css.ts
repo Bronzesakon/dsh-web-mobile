@@ -34,6 +34,24 @@ export const MISC_CSS = `  /* ---------- hero composer on mobile ----------
   [data-phase="hero"] [class$="_stack"] {
     gap: 0 !important;
   }
+
+  /* ---------- composer dock: swap git branch chip with the todo card ----------
+     The git-graph branch chip (conversation.input.dock, order 100) floats
+     alone at the bottom-left above the input card, with a dead zone to its
+     right; the full-width todo card (order 0) sits above it. Swap them so
+     the chip reads as the stack's top row and the todo card fills the row
+     above the composer. The dock container itself is display:contents
+     (inline style) — its children are direct flex items of the composer
+     stack, so order on the children is what reorders them. Only the chip
+     needs an order change: -1 puts it before the todo card (order 0) and
+     before the input card (order 0, later in DOM). The todo card must KEEP
+     its order 0 — raising it past the input card's order 0 would drop it
+     below the composer entirely (2026-08-16 regression, fixed). The queue
+     strip (order 20) keeps hugging the input card. Desktop untouched (this
+     block lives inside the max-width: 1023px media query). */
+  [data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor] {
+    order: -1 !important;
+  }
 }
 
 /* ---------- tablet / wide mobile: keep sheets from becoming full-width ----------

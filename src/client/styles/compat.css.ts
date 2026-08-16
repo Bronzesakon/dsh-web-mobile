@@ -445,4 +445,41 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
   [data-mobile-nav="stats"] * {
     white-space: nowrap !important;
   }
+
+  /* ---------- dsh-genui panel dock ----------
+     The genui panel docks above the composer (conversation.input.dock,
+     id genui-panel). On a phone its business-blue outline, generous chrome
+     and single-line ellipsis read as an unfinished artifact: long titles
+     truncate mid-word ("…default b···") with the chevron glued to the
+     ellipsis, and the pill crowds the composer. Mobile treatment: neutral
+     card border matching the composer, tighter chrome so the full title
+     fits, chevron with breathing room. Scoped to the mobile frame marker —
+     desktop keeps genui's own styling untouched. */
+
+  [data-mobile-nav="frame"] [data-genui-panel] {
+    margin: 6px 12px 4px !important;
+    border-color: var(--dsw-alias-border-l1, rgba(0, 0, 0, .12)) !important;
+    border-radius: 12px !important;
+  }
+  [data-mobile-nav="frame"] [data-genui-panel] [class*="_panelToggle"] {
+    padding: 7px 12px !important;
+    gap: 8px !important;
+  }
+  [data-mobile-nav="frame"] [data-genui-panel] [class*="_panelBadge"] {
+    padding: 0 7px !important;
+    border-radius: 5px !important;
+    font-size: 10.5px !important;
+    line-height: 1.7 !important;
+  }
+  [data-mobile-nav="frame"] [data-genui-panel] [class*="_panelTitle"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    font-size: 12.5px !important;
+    line-height: 1.45 !important;
+  }
+  [data-mobile-nav="frame"] [data-genui-panel] [class*="_panelChevron"] {
+    flex: none !important;
+    margin-left: 0 !important;
+    padding-left: 4px !important;
+  }
 `
