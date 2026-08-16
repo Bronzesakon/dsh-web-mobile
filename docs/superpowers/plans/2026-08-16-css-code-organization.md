@@ -99,7 +99,7 @@ Expected: 每个部分文件以 banner 注释 + `export const X_CSS = \`` 开头
 
 - [ ] **Step 3: 改 index.tsx 的 import**
 
-`src/client/index.tsx` 第 5 行 `import { MOBILE_CSS } from './mobile.css.ts'` 改为 `import { MOBILE_CSS } from './styles/index.ts'`（其余不动；第 31 行的 `dataset.pluginCss` 字符串保持 `'@dsh-external/dsh-mobile-nav/mobile.css'` 原样）。
+`src/client/index.tsx` 中 `import { MOBILE_CSS } from './mobile.css.ts'` 改为 `import { MOBILE_CSS } from './styles/index.ts'`（其余不动；apply() 里 `dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'` 是注入元数据字符串，保持原样）。
 
 - [ ] **Step 4: 删除旧文件并类型检查**
 
@@ -109,7 +109,7 @@ Expected: 退出码 0，无类型错误。
 - [ ] **Step 5: 构建**
 
 Run: `pnpm build`
-Expected: `client bundle written: lib/client.js (N modules inlined)`，N 比拆分前大（styles 下 5 个模块 + 原 1 个）。
+Expected: `client bundle written: lib/client.js (N modules inlined)`，N 应比拆分前多 4（styles/index.ts + 4 个部分文件；debug.ts 等其他模块数不变）。
 
 - [ ] **Step 6: bundle 抽查 + 残留检查**
 
@@ -118,7 +118,7 @@ node -e "const b=require('fs').readFileSync('lib/client.js','utf8');for(const [p
 grep -rn "from './mobile.css.ts'" src/ || echo 'no import references in src/'
 ```
 
-Expected: 4 个 probe 全部 OK；`src/` 无 import 引用——注意 `index.tsx` 第 31 行 `dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'` 含 'mobile.css' 字符串，这是注入元数据，按设计保留，不要改。
+Expected: 4 个 probe 全部 OK；`src/` 无 import 引用——注意 `index.tsx` 中 `dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'` 含 'mobile.css' 字符串，这是注入元数据，按设计保留，不要改。
 
 - [ ] **Step 7: 浏览器双宽度抽查（playwright）**
 
@@ -218,13 +218,17 @@ export function installPhoneChrome(ctx: ClientContext): void {
 
 写 `src/client/effects/aionui-compat.ts`：三个 effect 按拆分前在 `index.tsx` 中的原顺序排列（explorer 关闭标记 → preview 开关标记 → 升起动画重放），每个 effect 的注释、体、label 逐字照搬（可从当前 `index.tsx` 复制，label 分别是 `'dsh-mobile-nav: aionui explorer close marker'`、`'dsh-mobile-nav: preview sheet open marker'`、`'dsh-mobile-nav: sheet rise animation replay'`），文件骨架：
 
-三个 effect 的源区间（当前 `src/client/index.tsx`，Task 1 只改了第 5 行 import，行号未变；Task 2 的 Step 1 未动此文件）：
+五个 effect 的源区间（以 Task 2 执行时的 `src/client/index.tsx` 为准——本计划 2026-08-16 修订版锚点；若文件再变，按「唯一 label」定位，不要按行号硬搬）：
 
-| effect | 源区间 | 起点锚点注释（首个字符） | 终点锚点（唯一 label） |
-|---|---|---|---|
-| explorer 关闭标记 | 88–108 行 | `// dsh-web-ui compatibility: the aionui explorer column would render as a` | `}, 'dsh-mobile-nav: aionui explorer close marker')` |
-| preview 开关标记 | 110–160 行 | `// dsh-web-ui compatibility: the aionui preview column persists its open` | `}, 'dsh-mobile-nav: preview sheet open marker')` |
-| 升起动画重放 | 215–252 行 | `// The dsh-web-ui explorer / preview columns toggle via` | `}, 'dsh-mobile-nav: sheet rise animation replay')` |
+| effect | 目标文件 | 源区间 | 起点锚点注释（首个字符） | 终点锚点（唯一 label） |
+|---|---|---|---|---|
+| 状态栏 | effects/phone-chrome.ts | 58–90 行 | `// Phone chrome: KEEP the system status bar` | `}, 'dsh-mobile-nav: status bar theme + viewport + zoom guard')` |
+| explorer 关闭标记 | effects/aionui-compat.ts | 102–129 行 | `// dsh-web-ui compatibility: the aionui explorer column would render as a` | `}, 'dsh-mobile-nav: aionui explorer close marker')` |
+| preview 开关标记 | effects/aionui-compat.ts | 139–215 行 | `// dsh-web-ui compatibility: the aionui preview column persists its open` | `}, 'dsh-mobile-nav: preview sheet open marker')` |
+| 升起动画重放 | effects/aionui-compat.ts | 290–337 行 | `// The dsh-web-ui explorer / preview columns toggle via` | `}, 'dsh-mobile-nav: sheet rise animation replay')` |
+| 统计行 | effects/stats-line.ts | 224–283 行 | `// The official conversation status row (turns / steps / LLM time / TTFT /` | `}, 'dsh-mobile-nav: stats line marker')` |
+
+注意：5 个 effect 现在都带「按当前宽度挂载 + matchMedia change 重挂」包装（effect 体内 `const narrow = window.matchMedia(...)` + `install()`/`cleanup` 结构），**整段照搬**，包括这个包装——这是 2026-08-16 修过的行为，拆文件不许改变它。
 
 把三个区间各自的**整段原文**（含顶部大注释、`if (!narrow.matches) return () => {}` 守卫、cleanup 返回）按上表顺序复制进 `installAionuiCompat`，文件骨架：
 
@@ -233,19 +237,19 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 
 /** dsh-web-ui 兼容：explorer / preview 列的显隐标记与升起动画（同域同机制，合并一处）。 */
 export function installAionuiCompat(ctx: ClientContext): void {
-  // 1) explorer 关闭标记（原第 3 个 effect）
+  // 1) explorer 关闭标记
   ctx.effect(() => {
-    // ← 整段照搬 88–108 行原文
+    // ← 整段照搬 102–129 行原文
   }, 'dsh-mobile-nav: aionui explorer close marker')
 
-  // 2) preview 开关标记（原第 4 个 effect）
+  // 2) preview 开关标记
   ctx.effect(() => {
-    // ← 整段照搬 110–160 行原文
+    // ← 整段照搬 139–215 行原文
   }, 'dsh-mobile-nav: preview sheet open marker')
 
-  // 3) 升起动画重放（原第 6 个 effect）
+  // 3) 升起动画重放
   ctx.effect(() => {
-    // ← 整段照搬 215–252 行原文
+    // ← 整段照搬 290–337 行原文
   }, 'dsh-mobile-nav: sheet rise animation replay')
 }
 ```
@@ -254,7 +258,7 @@ export function installAionuiCompat(ctx: ClientContext): void {
 
 - [ ] **Step 3: 创建 effects/stats-line.ts**
 
-写 `src/client/effects/stats-line.ts`，把当前 `src/client/index.tsx` 中 162–213 行（起点锚点注释 `// The official conversation status row (turns / steps / LLM time / TTFT /`，终点唯一 label `'dsh-mobile-nav: stats line marker'`）的整段原文（含大注释、`mark`/`moveTps` 函数与 cleanup）逐字照搬进 `installStatsLine(ctx)` 的 `ctx.effect` 调用，文件骨架同 Task 2 Step 1。自检：`grep -c 'stats line marker' src/client/effects/stats-line.ts` 应输出 1。
+写 `src/client/effects/stats-line.ts`，把当前 `src/client/index.tsx` 中 224–283 行（起点锚点注释 `// The official conversation status row (turns / steps / LLM time / TTFT /`，终点唯一 label `'dsh-mobile-nav: stats line marker'`）的整段原文（含大注释、`mark`/`moveTps` 函数、install/cleanup 包装）逐字照搬进 `installStatsLine(ctx)` 的 `ctx.effect` 调用，文件骨架同 Task 2 Step 1。自检：`grep -c 'stats line marker' src/client/effects/stats-line.ts` 应输出 1。
 
 - [ ] **Step 4: 重写 index.tsx 为编排层**
 
@@ -266,6 +270,7 @@ import { MobileNavToggle } from './MobileNavToggle.tsx'
 import { MobileNavOverlay } from './MobileNavOverlay.tsx'
 import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
+import { installDebugBadge } from './debug.ts'
 import { installPhoneChrome } from './effects/phone-chrome.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
 import { installStatsLine } from './effects/stats-line.ts'
@@ -273,7 +278,7 @@ import { NS, en, zh } from './locales.ts'
 import type { MobileNavKey } from './locales.ts'
 ```
 
-保留：文件顶部 `declare module '@deepseek-ai/dsh-client-ui-slots'` 增强、`export const inject`、apply 的 JSDoc、文件底部 4 行 type-only import。删除原 5 个 effect 的实现体（只留 install 调用）。
+apply() 内顺序：locale 注册 → 样式注入 → `installDebugBadge(ctx)`（保留在 index.tsx）→ `installPhoneChrome(ctx)` → `installAionuiCompat(ctx)` → `installStatsLine(ctx)` → 三个 slot 注册。保留：文件顶部 `declare module '@deepseek-ai/dsh-client-ui-slots'` 增强、`export const inject`、apply 的 JSDoc、文件底部 4 行 type-only import。删除原 5 个 effect 的实现体（只留 install 调用）。
 
 - [ ] **Step 5: 类型检查 + 构建**
 
@@ -306,11 +311,17 @@ git commit -m "refactor(mobile): extract client effects into modules"
 `  - \`src/client/styles/\`：全部移动端样式，按主题拆 4 文件（base / layout / compat / misc），\`styles/index.ts\` 按原字节序拼接导出 \`MOBILE_CSS\`（单一 \`<style data-plugin>\` 注入，勿重排）。`
 `  - \`src/client/effects/\`：客户端 effect，按域拆 3 文件（phone-chrome / aionui-compat / stats-line）；\`index.tsx\` 只做编排（locale、样式注入、install 调用、slot 注册）。`
 
-- [ ] **Step 2: 更新 Conventions 节**
+- [ ] **Step 2: 更新 Pitfalls 节（mobile.css.ts 引用）**
+
+`AGENTS.md` 的 Pitfalls 有一条「从 `mobile.css.ts` 抽 CSS 做复现时：① 模板起点用 `indexOf('`', indexOf('export const MOBILE_CSS ='))`…」——拆分后该文件已不存在。把该条目整段替换为：
+
+`- 抽 CSS 做复现时：`MOBILE_CSS` 由 `src/client/styles/index.ts` 按 base → layout → compat → misc 拼接——直接读对应 `styles/*.css.ts` 的模板内容拼接即可，不必解析 bundle；注释里不能写反引号（会截断模板字符串成 TS 语法错误）、注释必须完整保留（截断的 `/*` 会让 CSS 解析器吞掉下一条规则）这两条仍适用。`
+
+- [ ] **Step 3: 更新 Conventions 节**
 
 提交前缀一行 `feat(mobile):`、`fix(mobile):`、`docs:`、`chore:` 改为 `feat(mobile):`、`fix(mobile):`、`refactor(mobile):`、`docs:`、`chore:`。
 
-- [ ] **Step 3: 提交**
+- [ ] **Step 4: 提交**
 
 ```bash
 git add AGENTS.md

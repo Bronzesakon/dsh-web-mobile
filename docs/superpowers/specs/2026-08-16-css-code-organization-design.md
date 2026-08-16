@@ -44,8 +44,8 @@ src/client/
   styles/
     index.ts                # 按序拼接 4 部分，导出 MOBILE_CSS（唯一注入点）
     base.css.ts             # ~130 行：基础控件（footer actions / 浮动按钮 / 遮罩 / settings 入场 / preview rise）
-    layout.css.ts           # ~440 行：移动布局（chrome / AppFrame / 会话文本 / composer 底栏 / header / popovers / settings 弹窗）
-    compat.css.ts           # ~330 行：dsh-web-ui 家族兼容（family base / explorer / preview / task board / market / usage-stats / settings polish / footer polish / pet / stats line）
+    layout.css.ts           # ~455 行：移动布局（chrome / AppFrame / 会话文本 / composer 底栏 / header / popovers / settings 弹窗）
+    compat.css.ts           # ~445 行：dsh-web-ui 家族兼容（family base / explorer / preview 含全屏切换 / task board / market / usage-stats / settings polish / footer polish / pet / stats line）
     misc.css.ts             # ~90 行：hero 输入区 + 平板/宽屏 + 桌面 no-op（三段按原序）
 ```
 
