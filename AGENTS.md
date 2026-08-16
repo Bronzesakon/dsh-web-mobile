@@ -69,6 +69,7 @@
 - 文件树**目录行不得设置 `data-aionui-preview-open`**：只允许无 `[class$="_treeArrow"]` 的文件行触发，否则点目录展开会弹出 localStorage 恢复的旧预览 tab（用户视角 = 「随便点一下全屏弹出一个 md 内容」，2026-08-16 修）。
 - 预览浮层打开时文件树浮层必须让位（CSS：`[data-mobile-nav="frame"][data-aionui-preview-open] [data-aionui-explorer-col] { visibility: hidden !important }`，与 explorer-open 规则同 specificity，必须排在它之后）；关掉预览后文件树自动回来。
 - 2026-08-16「手机全屏 md」事故真相：全屏内容 = 会话消息里的 GenUI（dsh-ui fence）卡片（「当前结构」表格），不是任何文件/预览。当前 bundle + 当前 genui CSS 均无全屏渲染路径（aionui 列是底部浮层且被门控、genui block/panel 无 fixed 规则）→ 手机端再复现时先抓 URL 栏：裸文件页 = 浏览器导航到了文件 URL；有 app UI = 旧 JS 缓存。别凭截图猜「旧 bundle」。
+- **用户手机浏览器是 Via（WebView 内核 + 激进缓存，会无视 `cache-control: no-cache`）**：旧 HTML/资源会被固化 →「怎么刷新都跳不过、清缓存才好、重建 bundle（rev 变化触发整页重载）后也消失」。诊断此类问题用 `?mobile-nav-debug=1` 徽章（提交 2300b82）：右上角实时显示 URL/宽高/媒体查询/头部/composer/aionui 浮层/genui 数量/捕获的 JS 错误。**未复现时不要重建 bundle**——重建会冲掉手机端卡死状态，反而不利于取证。
 - 没有测试框架：改布局后需在真实 DSH web profile + 窄屏（约 390px）和桌面（≥1024px）手动验证。
 
 ## Maintenance
