@@ -3,6 +3,7 @@ import { MobileNavToggle } from './MobileNavToggle.tsx'
 import { MobileNavOverlay } from './MobileNavOverlay.tsx'
 import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './mobile.css.ts'
+import { installDebugBadge } from './debug.ts'
 import { NS, en, zh } from './locales.ts'
 import type { MobileNavKey } from './locales.ts'
 
@@ -35,6 +36,9 @@ export function apply(ctx: ClientContext): void {
       tag.remove()
     }
   }, 'dsh-mobile-nav: styles')
+
+  // Diagnostic overlay for phone-side repros (?mobile-nav-debug=1).
+  installDebugBadge(ctx)
 
   // Phone chrome: KEEP the system status bar (no fullscreen) and make it
   // blend into the page. On narrow screens:
