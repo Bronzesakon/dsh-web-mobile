@@ -384,6 +384,16 @@ export const MOBILE_CSS = `
     top: auto !important;
     z-index: auto !important;
   }
+  /* Keep the Files action immediately left of any jobs/subagent popover
+     trigger regardless of DOM order. Both are flex items inside the header
+     actions row, so explicit order makes the file-tree button win the slot
+     next to the trigger instead of being pushed off-screen after it. */
+  [data-phase] header [data-mobile-nav="files"] {
+    order: 1 !important;
+  }
+  [data-phase] header [class$="_root"]:has(> button[class$="_trigger"]) {
+    order: 2 !important;
+  }
   /* Session log download: gone from the header row on mobile (the utilities
      seat holds only the session-log-export capsule). */
   [data-phase] header > :first-child > :last-child {
