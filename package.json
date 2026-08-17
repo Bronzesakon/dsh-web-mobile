@@ -1,7 +1,7 @@
 {
   "name": "@dsh-external/dsh-mobile-nav",
   "version": "1.0.0",
-  "description": "Mobile-adaptive DSH web UI: on narrow screens the sidebar rail is hidden and the directory opens as an overlay drawer, so the conversation gets the full width.",
+  "description": "尽可能的使dsh适配竖屏等移动端设备",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
