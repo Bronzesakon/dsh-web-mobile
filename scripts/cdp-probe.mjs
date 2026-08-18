@@ -15,6 +15,13 @@ const DEFAULT_URL = 'http://127.0.0.1:3080/';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const CHROME_GRACE_MS = 5_000;
 const CHIP_SELECTOR = '[data-gitgraph-chip-anchor] [data-gitgraph-chip]';
+const MOBILE_STYLE_SELECTOR = 'style[data-plugin="@dsh-external/dsh-mobile-nav"]';
+const MOBILE_FRAME_SELECTOR = '[data-mobile-nav="frame"]';
+const MOBILE_DRAWER_SELECTOR = '[data-mobile-nav="frame"] > :first-child';
+const MOBILE_BACKDROP_SELECTOR = '[data-mobile-nav="backdrop"]';
+const MOBILE_TOGGLE_SELECTOR = '[data-mobile-nav="toggle"]';
+const MOBILE_FAB_SELECTOR = '[data-mobile-nav="fab"]';
+const MOBILE_CONTROL_SELECTORS = [MOBILE_TOGGLE_SELECTOR, MOBILE_FAB_SELECTOR];
 
 function readConfig(env = process.env) {
   const sessionId = env.DSH_PROBE_SESSION_ID?.trim();
@@ -116,6 +123,59 @@ async function waitFor(label, timeoutMs, signal, probe) {
   throw new TimeoutError(label, timeoutMs);
 }
 
+async function setViewport(client, width, height, mobile) {
+  await client.send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: mobile ? 2 : 1,
+    mobile: !!mobile,
+  });
+}
+
+async function rectFor(client, selector) {
+  return client.evaluate(`(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element) return null;
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    if (style.display === 'none' || style.visibility === 'hidden' || rect.width <= 0 || rect.height <= 0) return null;
+    return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height, x: rect.x, y: rect.y };
+  })()`);
+}
+
+async function clickPoint(client, x, y) {
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+}
+
+async function clickSelector(client, selector) {
+  const rect = await rectFor(client, selector);
+  if (!rect) {
+    fail('geometry.click-target', `selector=${selector} not visible`);
+    throw new ProbeFailure('geometry.click-target', `selector=${selector} not visible`);
+  }
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const hit = await client.evaluate(`(() => {
+    const element = document.elementFromPoint(${x}, ${y});
+    const target = document.querySelector(${JSON.stringify(selector)});
+    return element !== null && target !== null && (element === target || target.contains(element));
+  })()`);
+  if (!hit) {
+    fail('geometry.element-from-point', `(${Math.round(x)}, ${Math.round(y)}) not over ${selector}`);
+    throw new ProbeFailure('geometry.element-from-point', `(${Math.round(x)}, ${Math.round(y)}) not over ${selector}`);
+  }
+  await clickPoint(client, x, y);
+  return { x, y, rect };
+}
+
+async function pressEscape(client) {
+  const keyParams = { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 };
+  await client.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...keyParams });
+  await client.send('Input.dispatchKeyEvent', { type: 'keyUp', ...keyParams });
+}
+
 function allocatePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -183,6 +243,169 @@ function createCdpClient(ws, signal) {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     },
   };
+}
+
+async function runCoreScenario(client, config, signal, pageErrors) {
+  // Narrow plugin startup: exactly one plugin style tag plus the frame marker.
+  const boot = await waitFor('mobile plugin boot', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => ({
+      styleCount: document.querySelectorAll(${JSON.stringify(MOBILE_STYLE_SELECTOR)}).length,
+      frame: document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)}) !== null,
+    }))()`);
+    return state.styleCount === 1 && state.frame ? state : null;
+  });
+  pass('core.plugin-style', `count=${boot.styleCount}`);
+  pass('mobile.frame-marker', 'present=true');
+
+  // Drawer state: open = backdrop present, frame without data-sidebar-collapsed,
+  // first frame child (the drawer) with positive size; closed = collapsed frame
+  // and no backdrop.
+  const drawerStateProbe = async () => client.evaluate(`(() => {
+    const frame = document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)});
+    const drawer = document.querySelector(${JSON.stringify(MOBILE_DRAWER_SELECTOR)});
+    const rect = drawer === null ? null : drawer.getBoundingClientRect();
+    return {
+      backdrop: document.querySelector(${JSON.stringify(MOBILE_BACKDROP_SELECTOR)}) !== null,
+      collapsed: frame === null ? null : frame.hasAttribute('data-sidebar-collapsed'),
+      drawerWidth: rect === null ? 0 : rect.width,
+      drawerHeight: rect === null ? 0 : rect.height,
+    };
+  })()`);
+  const waitDrawerState = (label, wantOpen) => waitFor(label, config.timeoutMs, signal, async () => {
+    try {
+      const state = await drawerStateProbe();
+      if (wantOpen) {
+        return state.backdrop && state.collapsed === false && state.drawerWidth > 0 && state.drawerHeight > 0 ? state : null;
+      }
+      return state.collapsed === true && !state.backdrop ? state : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // An open control is usable only when its center hit-tests back to it: the
+  // sliding drawer can cover the toggle while animating out after a close.
+  const waitControlReachable = (label, selector) => waitFor(label, config.timeoutMs, signal, async () => {
+    try {
+      const rect = await rectFor(client, selector);
+      if (rect === null) return null;
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      return client.evaluate(`(() => {
+        const element = document.elementFromPoint(${x}, ${y});
+        const target = document.querySelector(${JSON.stringify(selector)});
+        return element !== null && target !== null && (element === target || target.contains(element));
+      })()`);
+    } catch {
+      return null;
+    }
+  });
+
+  // Pick the first visible open control: header toggle, else floating fab.
+  let openSelector = null;
+  for (const selector of MOBILE_CONTROL_SELECTORS) {
+    try {
+      await waitControlReachable(`mobile open control ${selector}`, selector);
+      openSelector = selector;
+      break;
+    } catch (error) {
+      if (!(error instanceof TimeoutError)) throw error;
+    }
+  }
+  if (openSelector === null) {
+    fail('mobile.open-control', 'neither toggle nor fab became visible before deadline');
+    throw new ProbeFailure('mobile.open-control', 'neither toggle nor fab became visible before deadline');
+  }
+
+  // Open the drawer with the selected control and assert the expanded state.
+  await clickSelector(client, openSelector);
+  await waitDrawerState('mobile drawer open', true);
+
+  // Close via the backdrop, at a point derived from live geometry: midway
+  // between the open drawer's right edge and the viewport right edge.
+  const drawerRect = await rectFor(client, MOBILE_DRAWER_SELECTOR);
+  if (drawerRect === null) {
+    fail('geometry.drawer', 'drawer rect unavailable while open');
+    throw new ProbeFailure('geometry.drawer', 'drawer rect unavailable while open');
+  }
+  const viewport = await client.evaluate('({ width: innerWidth, height: innerHeight })');
+  const backdropX = (drawerRect.right + viewport.width) / 2;
+  const backdropY = viewport.height / 2;
+  const overBackdrop = await client.evaluate(`(() => {
+    const element = document.elementFromPoint(${backdropX}, ${backdropY});
+    return element !== null && element.closest(${JSON.stringify(MOBILE_BACKDROP_SELECTOR)}) !== null;
+  })()`);
+  if (!overBackdrop) {
+    fail('mobile.backdrop.point', `(${Math.round(backdropX)}, ${Math.round(backdropY)}) not over backdrop`);
+    throw new ProbeFailure('mobile.backdrop.point', `(${Math.round(backdropX)}, ${Math.round(backdropY)}) not over backdrop`);
+  }
+  await clickPoint(client, backdropX, backdropY);
+  await waitDrawerState('mobile backdrop close', false);
+  pass('mobile.drawer.backdrop', `drawerWidth=${Math.round(drawerRect.width)} clickX=${Math.round(backdropX)}`);
+
+  // Reopen with the same live selector, then close with a real Escape key.
+  await waitControlReachable('mobile reopen control', openSelector);
+  await clickSelector(client, openSelector);
+  await waitDrawerState('mobile drawer reopen', true);
+  await pressEscape(client);
+  await waitDrawerState('mobile escape close', false);
+  pass('mobile.drawer.escape', 'collapsed=true');
+
+  // Desktop: the plugin must be a no-op at 1280x800.
+  await setViewport(client, 1280, 800, false);
+  await waitFor('desktop no-op', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => {
+      const visible = (selector) => {
+        const element = document.querySelector(selector);
+        if (element === null) return false;
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      return {
+        frame: document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)}) !== null,
+        preview: document.querySelector('[data-mobile-preview-full]') !== null,
+        toggleVisible: visible(${JSON.stringify(MOBILE_TOGGLE_SELECTOR)}),
+        fabVisible: visible(${JSON.stringify(MOBILE_FAB_SELECTOR)}),
+      };
+    })()`);
+    return !state.frame && !state.preview && !state.toggleVisible && !state.fabVisible ? state : null;
+  });
+  pass('desktop.no-op', 'frame=absent preview=absent controls=hidden');
+
+  // Narrow breakpoint re-arm: frame back, an open control visible, and the
+  // drawer closed again so the next scenario starts from a stable state.
+  await setViewport(client, 390, 844, true);
+  await waitFor('mobile breakpoint re-arm', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => {
+      const visible = (selector) => {
+        const element = document.querySelector(selector);
+        if (element === null) return false;
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      const frame = document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)});
+      return {
+        frame: frame !== null,
+        collapsed: frame === null ? null : frame.hasAttribute('data-sidebar-collapsed'),
+        toggleVisible: visible(${JSON.stringify(MOBILE_TOGGLE_SELECTOR)}),
+        fabVisible: visible(${JSON.stringify(MOBILE_FAB_SELECTOR)}),
+      };
+    })()`);
+    return state.frame && state.collapsed === true && (state.toggleVisible || state.fabVisible) ? state : null;
+  });
+  pass('mobile.breakpoint-rearm', 'frame=present control=visible collapsed=true');
+
+  // Surface captured page errors (deduplicated); a real-combination gate must
+  // fail on them.
+  const uniqueErrors = [...new Set(pageErrors)];
+  if (uniqueErrors.length > 0) {
+    const detail = `count=${uniqueErrors.length} first=${uniqueErrors[0].slice(0, 160)}`;
+    fail('page.errors', detail);
+    throw new ProbeFailure('page.errors', detail);
+  }
+  pass('page.errors', 'count=0');
 }
 
 async function main() {
@@ -254,7 +477,28 @@ async function main() {
 
     await client.send('Page.enable');
     await client.send('Runtime.enable');
-    await client.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await client.send('Log.enable');
+
+    // Page-error capture: registered before any navigation so boot-time
+    // exceptions, console errors, and log errors all land in the gate.
+    const pageErrors = [];
+    client.on('Runtime.exceptionThrown', ({ exceptionDetails }) => {
+      pageErrors.push(exceptionDetails.exception?.description || exceptionDetails.text);
+    });
+    client.on('Runtime.consoleAPICalled', ({ type, args }) => {
+      if (type === 'error') pageErrors.push(args.map((arg) => arg.value ?? arg.description ?? '').join(' '));
+    });
+    client.on('Log.entryAdded', ({ entry }) => {
+      if (entry.level === 'error') pageErrors.push(entry.text);
+    });
+
+    // Inject the current session before the first navigation (no
+    // navigate-then-reload dance): the plugin sees it on first boot.
+    const currentSession = JSON.stringify({ sessionId: config.sessionId });
+    await client.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `localStorage.setItem('dsh.sessions.current', ${JSON.stringify(currentSession)})`,
+    });
+    await setViewport(client, 390, 844, true);
     await client.send('Page.navigate', { url: config.url });
 
     const waitForPageLoad = (label) => waitFor(label, config.timeoutMs, signal, async () => {
@@ -268,10 +512,7 @@ async function main() {
 
     await waitForPageLoad('page load');
 
-    const currentSession = JSON.stringify({ sessionId: config.sessionId });
-    await client.evaluate(`localStorage.setItem('dsh.sessions.current', ${JSON.stringify(currentSession)});`);
-    await client.send('Page.reload');
-    await waitForPageLoad('page reload');
+    await runCoreScenario(client, config, signal, pageErrors);
 
     let chipFound = false;
     try {
