@@ -408,6 +408,96 @@ async function runCoreScenario(client, config, signal, pageErrors) {
   pass('page.errors', 'count=0');
 }
 
+async function runGitgraphScenario(client, config, signal) {
+  // Step 1: explicit missing-chip semantics. Absence is a hard failure under
+  // DSH_PROBE_REQUIRE_CHIP=1 and a SKIP otherwise; once the chip exists every
+  // following assertion is required even when strict mode is off, so a
+  // detected-but-broken integration can never silently skip.
+  const chipPresent = await client.evaluate(`document.querySelector(${JSON.stringify(CHIP_SELECTOR)}) !== null`);
+  if (!chipPresent) {
+    if (config.requireChip) {
+      fail('integration.gitgraph', 'reason=chip-not-present required=true');
+      throw new ProbeFailure('integration.gitgraph', 'reason=chip-not-present required=true');
+    }
+    skip('integration.gitgraph', 'reason=chip-not-present');
+    return;
+  }
+  pass('chip.present', 'found=true');
+
+  // Step 2: the chip must have been reparented into the composer card
+  // (textarea's closest element whose class ends with `_card`).
+  const placement = await client.evaluate(`(() => {
+    const chip = document.querySelector(${JSON.stringify(CHIP_SELECTOR)});
+    const card = document.querySelector('textarea')?.closest('[class$="_card"]');
+    return { hasCard: card !== null, reparented: chip?.parentElement === card };
+  })()`);
+  assertCheck('integration.gitgraph.reparented', placement.hasCard && placement.reparented, `hasCard=${placement.hasCard} reparented=${placement.reparented}`);
+
+  // Step 3: real pressed feedback. Press at the live chip center and hold
+  // ~120ms so `:active` stays applied, then require both `:active` and a
+  // non-identity DOMMatrix transform. Release always happens via the local
+  // finally, so a failed assertion cannot leave the pointer pressed.
+  const chipRect = await rectFor(client, CHIP_SELECTOR);
+  if (chipRect === null) {
+    fail('integration.gitgraph.chip-geometry', 'chip not visible');
+    throw new ProbeFailure('integration.gitgraph.chip-geometry', 'chip not visible');
+  }
+  const pressX = chipRect.left + chipRect.width / 2;
+  const pressY = chipRect.top + chipRect.height / 2;
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pressX, y: pressY });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pressX, y: pressY, button: 'left', clickCount: 1 });
+  try {
+    await sleep(120, signal);
+    const pressed = await client.evaluate(`(() => {
+      const chip = document.querySelector(${JSON.stringify(CHIP_SELECTOR)});
+      const transform = getComputedStyle(chip).transform;
+      const matrix = transform === 'none' ? null : new DOMMatrixReadOnly(transform);
+      const transformed = matrix !== null
+        && (matrix.a !== 1 || matrix.b !== 0 || matrix.c !== 0 || matrix.d !== 1 || matrix.e !== 0 || matrix.f !== 0);
+      return { active: chip.matches(':active'), transformed, transform };
+    })()`);
+    assertCheck('integration.gitgraph.pressed', pressed.active && pressed.transformed, `active=${pressed.active} transformed=${pressed.transformed} transform=${pressed.transform}`);
+  } finally {
+    await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pressX, y: pressY, button: 'left', clickCount: 1 });
+  }
+
+  // Step 4: popover geometry after release: in-viewport rect with options.
+  const popoverState = await waitFor('gitgraph popover', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => {
+      const popover = document.querySelector('[data-gitgraph-popover]');
+      if (!popover) return null;
+      const rect = popover.getBoundingClientRect();
+      return {
+        optionCount: popover.querySelectorAll('[role="option"]').length,
+        inViewport: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight,
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      };
+    })()`);
+    return state || null;
+  });
+  try {
+    assertCheck('integration.gitgraph.popover', popoverState.optionCount > 0 && popoverState.inViewport, `options=${popoverState.optionCount} rect=${JSON.stringify(popoverState.rect)}`);
+  } finally {
+    // Escape cleanup runs even when the popover assertion fails, so teardown
+    // always starts from a neutral UI state; a cleanup timeout on the failure
+    // path is logged but must not mask the original ProbeFailure.
+    await pressEscape(client);
+    try {
+      await waitFor('gitgraph popover closed', config.timeoutMs, signal, async () => {
+        const present = await client.evaluate(`document.querySelector('[data-gitgraph-popover]') !== null`);
+        return !present || null;
+      });
+      pass('integration.gitgraph.cleanup', 'popover=closed');
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        console.error('cleanup: gitgraph popover did not close after Escape');
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 async function main() {
   const abortController = new AbortController();
   const onSignal = (signalName) => abortController.abort(new Error(`received ${signalName}`));
@@ -514,20 +604,10 @@ async function main() {
 
     await runCoreScenario(client, config, signal, pageErrors);
 
-    let chipFound = false;
-    try {
-      chipFound = await waitFor('chip presence', config.timeoutMs, signal, async () => {
-        const present = await client.evaluate(`document.querySelector(${JSON.stringify(CHIP_SELECTOR)}) !== null`);
-        return present || null;
-      });
-    } catch (error) {
-      if (!(error instanceof TimeoutError)) throw error;
-    }
-    if (chipFound) {
-      pass('chip.present', 'found=true');
-    } else {
-      skip('chip.present', 'reason=chip-not-present');
-    }
+    // Optional/strict gitgraph integration gate; the core scenario has already
+    // restored the narrow viewport with the drawer closed. The scenario closes
+    // any popover it opens before returning.
+    await runGitgraphScenario(client, config, signal);
   } catch (error) {
     if (!(error instanceof ProbeFailure)) {
       fail('fatal', error instanceof Error ? error.message : String(error));
