@@ -22,7 +22,12 @@ export function installStatsLine(ctx: ClientContext): void {
       // The composer root renders the TPS readout ("TPS 89.4 tok/s") as its
       // own row BELOW the status strip; fold it into the strip so every
       // metric scrolls together. The suite re-renders its own tree, so this
-      // must be idempotent and re-run on every mutation.
+      // must be idempotent and re-run on every mutation. Where the readout
+      // came from is recorded so disposal can put it back — on a
+      // narrow→wide transition the desktop layout must be the official one
+      // again, and `[data-mobile-nav="stats"]` is not covered by the
+      // desktop hide rules.
+      let tpsOrigin: { parent: Node; next: Node | null } | null = null
       const moveTps = (stats: Element): void => {
         if ([...stats.children].some((c) => /^TPS\s+\d/.test((c.textContent ?? '').trim()))) return
         const stack = stats.closest('[class$="_composerStack"]')
@@ -31,6 +36,9 @@ export function installStatsLine(ctx: ClientContext): void {
           const text = (el.textContent ?? '').trim()
           if (!/^TPS\s+\d/.test(text)) continue
           if (el.children.length > 0) continue
+          if (tpsOrigin === null && el.parentElement !== null) {
+            tpsOrigin = { parent: el.parentElement, next: el.nextSibling }
+          }
           stats.appendChild(el)
           return
         }
@@ -59,6 +67,17 @@ export function installStatsLine(ctx: ClientContext): void {
       mark()
       cleanup = () => {
         observer.disconnect()
+        // Hand the official layout back: drop the marker that drives the
+        // one-line strip and return the TPS readout to its own row.
+        for (const el of document.querySelectorAll('[data-mobile-nav="stats"]')) {
+          el.removeAttribute('data-mobile-nav')
+        }
+        if (tpsOrigin !== null && tpsOrigin.parent.isConnected) {
+          const tps = [...tpsOrigin.parent.ownerDocument!.querySelectorAll('div')].find(
+            (el) => el.children.length === 0 && /^TPS\s+\d/.test((el.textContent ?? '').trim()),
+          )
+          if (tps !== undefined) tpsOrigin.parent.insertBefore(tps, tpsOrigin.next)
+        }
       }
     }
     install()
