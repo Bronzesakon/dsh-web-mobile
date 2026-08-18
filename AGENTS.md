@@ -32,12 +32,15 @@
   - `conversation.session.header.actions` → `MobileNavToggle`（目录开关 + 文件树按钮）
   - `shell.overlay` → `MobileNavOverlay`（遮罩 / 浮动按钮 / Escape 与点击关闭）
   - `sidebar.footer.action` → `MobileDrawerFooter`（文件 + 会话日志下载）
+  - `settings.general.item` → `HapticRow`（通用设置里的点按振动开关，order 30，排在官方行 permission -20 / language 0 / appearance 10 / composer-enter 20 之后；桌面端由 CSS 隐藏）
 - 核心文件：
   - `src/client/MobileNavOverlay.tsx`：维护 `data-mobile-nav="frame"`，导航关闭启发式。
   - `src/client/MobileNavToggle.tsx`：会话头部控件。
   - `src/client/MobileDrawerFooter.tsx`：抽屉底部操作。
+  - `src/client/HapticRow.tsx`：`settings.general.item` 行（`role="switch"` 药丸开关，无官方 Switch 原语，样式自绘）。纵向布局：标题「点按振动（Mobile）」+ 描述（`haptic.desc`：插件署名 + 仅支持手机等支持振动的设备）在上，控件行（开关 + 强度选择器并排）在下，防窄屏挤占。强度选择器参照官方 LanguageRow 胶囊控件（`Menu` + `IconChevronDownOutline14`，portal），开关关闭时 `disabled` 置灰（CSS opacity .5）。
   - `src/client/styles/`：全部移动端样式，拆为 `base/layout/compat/misc.css.ts` + `index.ts`（导出 `MOBILE_CSS` = 四者按序 `join('\n')`，注入为单一 `<style data-plugin>`）。拆分是纯搬移：组件文件**不要手改 CSS 内容**，用切片脚本按原字节序切（见下 Pitfall「styles/ 按节切片」）。
-  - `src/client/effects/`：客户端 effect，按域拆 3 文件（phone-chrome / aionui-compat / stats-line）；`index.tsx` 只做编排（locale、样式注入、install 调用、slot 注册）。
+  - `src/client/effects/`：客户端 effect，按域拆 4 域（phone-chrome / aionui-compat / stats-line / haptic+haptic-pref）；`index.tsx` 只做编排（locale、样式注入、install 调用、slot 注册）。
+  - `src/client/effects/haptic-pref.ts`：振动偏好模块——localStorage（key `dsh-mobile-nav.haptic.enabled` 默认开 / `dsh-mobile-nav.haptic.intensity` 默认 light）+ 同标签页 CustomEvent + 跨标签页 `storage` 事件；只被 `effects/haptic.ts` 和 `HapticRow.tsx` 引用。强度→时长映射（light 8 / medium 15 / heavy 30ms）在 `effects/haptic.ts` 的 `INTENSITY_MS`，每次点按现读（改强度无需重挂监听）。
   - `src/client/locales.ts`：`mobileNav` i18n；`zh` 是 key 源真相，`en` 是类型镜像。
   - `scripts/build-client.mjs`：自定义打包器。
 - 构建流程：client tsc 输出到 `.client-build/`，`build-client.mjs` 把相对模块内联成 `window.__ModuleLoader__.load({...})` 并写入 `lib/client.js`，平台模块保留 `require()`；随后删除 `.client-build/` 和 `lib/client.js.map`。**bundle 支持递归内联 `styles/` 子目录模块**（`require` 按宿主模块目录解析到规范相对路径，再改写进扁平 `__modules` map；运行时 `__localRequire` 不变）。
@@ -82,6 +85,7 @@
 - 抽 CSS 做复现时：`MOBILE_CSS` 由 `src/client/styles/index.ts` 按 base → layout → compat → misc 拼接——直接读对应 `styles/*.css.ts` 的模板内容拼接即可，不必解析 bundle；注释里不能写反引号（会截断模板字符串成 TS 语法错误）、注释必须完整保留（截断的 `/*` 会让 CSS 解析器吞掉下一条规则）这两条仍适用。
 - **styles/ 按节切片（2026-08-16 拆分心得）**：把 `mobile.css.ts`（现已拆到 `src/client/styles/`）按主题节切片时，各节分隔是**空行 `\n\n` + 下一个 marker 的起始行**；其中 `/* dsh-web-ui family */`、`/* hero composer */` 两个 marker 是**缩进**在 `@media` 块内的（行首有两空格）。切片脚本若用「当前节 end -= 2 + 下节 start = marker 偏移」（去掉空行、下节不带头空格）会丢字节导致 round-trip 不匹配。正确做法：取 `css.lastIndexOf('\n', markerPos) + 1` 作为 marker **所在行的行首**（含缩进）当下节 start，当前节 `end = 下节行首 - 1`（保留一个尾部 `\n`），再用 `join('\n')` 把单 `\n` 补回原来空行的两个 `\n` —— 可证明字节往返一致；生成后务必跑 `node $TMPDIR/split-css.mjs` 的自检 `SPLIT OK`。
 - **`build-client.mjs` 的扁平→递归（2026-08-16 修）**：该 bundler 原先对 `.client-build/` 只做**扁平** `readdir`。把 CSS 放进 `src/client/styles/`（子目录）后 tsc 会 emit 出 `.client-build/styles/*.js`，`index.js` 的 `require("./styles/index.js")` 在扁平 map 里找不到 → 构建直接 `TypeError` 崩溃。已修成**递归收集 + 按宿主模块目录把 `require("./x.js")` 解析/改写为规范相对路径**（如 `styles/base.css.js`），运行时 `__localRequire` 不变。以后往 `src/client/` 加子目录模块是安全的；若未来恢复为扁平，需注意此限制。
+- **`build-client.mjs` 不支持 `../` 相对 require（2026-08-18 踩坑）**：`REQUIRE_RE = /require\("(\.[^"]+\.js)"\)/` 能匹配 `../x.js`，但 `resolveChild` 无条件 `rel.slice(2)` 剥 `./` 前缀 → `../` 被解析成错误路径，构建报 `client module not found for require: effects/haptic-pref.js`（实际文件在 `src/client/` 根）。**跨目录引用一律用「从 `src/client/` 根出发的 `./` 形式」**：effects 里共享模块放进 `src/client/effects/` 目录（同目录 `./x`），根级组件引用它写 `./effects/x.ts`——不要写 `../`。除非先修 bundler 的路径解析。
 - **整块替换 CSS/代码前先确认替换区间边界**：用脚本按起止标记替换大块时，区间内的独立规则会一起被吞（1779cd4 事故：重写 toggle 块把「全屏几何规则」删了，功能表现为「标记/图标正常切换但浮层不变全屏」）。改完必须 grep 关键选择器/属性（如 `inset: 0`）确认没丢规则；这类回归用户实测前难以察觉。
 - 2026-08-16「手机全屏 md」事故真相：全屏内容 = 会话消息里的 GenUI（dsh-ui fence）卡片（「当前结构」表格），不是任何文件/预览。当前 bundle + 当前 genui CSS 均无全屏渲染路径（aionui 列是底部浮层且被门控、genui block/panel 无 fixed 规则）→ 手机端再复现时先抓 URL 栏：裸文件页 = 浏览器导航到了文件 URL；有 app UI = 旧 JS 缓存。别凭截图猜「旧 bundle」。**补充（当晚续接会话验证，「无全屏路径」的判断不成立）**：Playwright 复用长期挂着的旧页面 context（带旧 localStorage）时，harness web 会把**最后一条 dsh-ui fence 以 `pI_x6G_frame` 兄弟节点挂到 app 根级**，并给 frame 内联 `display: none`（inline style；grid 5 轨仍是 aionui 写的）——任意宽度（360~1280）、`/` 与 `/settings`、当前与重构前 bundle 均复现，与 dsh-mobile-nav 无关（插件从不写 display、桌面宽度同样出现、旧 bundle 同样出现）。**全新 context（无旧存储）** + 会话打开则渲染完全正常，抽屉验证可正常执行。再遇「手机全屏卡」先让用户清站点数据/换新浏览器 context 验证，别据此改 mobile-nav 代码。
 - **用户手机浏览器是 Via（WebView 内核 + 激进缓存，会无视 `cache-control: no-cache`）**：旧 HTML/资源会被固化 →「怎么刷新都跳不过、清缓存才好、重建 bundle（rev 变化触发整页重载）后也消失」。诊断此类问题用 `?mobile-nav-debug=1` 徽章（提交 2300b82）：右上角实时显示 URL/宽高/媒体查询/头部/composer/aionui 浮层/genui 数量/捕获的 JS 错误。**未复现时不要重建 bundle**——重建会冲掉手机端卡死状态，反而不利于取证。
