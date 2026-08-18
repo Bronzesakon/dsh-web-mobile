@@ -146,13 +146,29 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
   // wiped. (The sheet is z-index 56, above the overlay layer's z-20
   // stacking context, so a button inside the sheet is never covered.)
   // Clicking toggles the frame's `data-mobile-preview-full` marker; the
-  // two SVG icons swap via CSS.
+  // two SVG icons swap via CSS and the accessible name follows the marker
+  // (the icon swap alone left a screen reader announcing "Fullscreen
+  // preview" while the button actually exits fullscreen).
   useEffect(() => {
     if (!mobile) return
     let button: HTMLButtonElement | null = null
     let observer: MutationObserver | null = null
+    // The marker also gets cleared when the sheet closes (see the preview
+    // effect in effects/aionui-compat.ts), so the name is derived from the
+    // marker rather than tracked separately.
+    const syncLabel = (target: HTMLButtonElement): void => {
+      const full = findFrame()?.hasAttribute('data-mobile-preview-full') ?? false
+      const label = t(full ? 'previewExitFullscreen' : 'previewFullscreen')
+      // ensure() runs on every body mutation batch, so only write when the
+      // name actually changed — an unconditional write would dirty the DOM
+      // and feed the observer that called us.
+      if (target.getAttribute('aria-label') === label) return
+      target.setAttribute('aria-label', label)
+      target.title = label
+    }
     const onClick = (): void => {
       findFrame()?.toggleAttribute('data-mobile-preview-full')
+      if (button !== null) syncLabel(button)
     }
     const ensure = (): void => {
       const col = document.querySelector('[data-aionui-preview-col]')
@@ -161,8 +177,6 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
         button = document.createElement('button')
         button.type = 'button'
         button.dataset.mobileNav = 'preview-full-toggle'
-        button.setAttribute('aria-label', t('previewFullscreen'))
-        button.title = t('previewFullscreen')
         button.innerHTML = [
           '<svg class="dsh-mobile-nav-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">',
           '<path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
@@ -173,6 +187,7 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
         ].join('')
         button.addEventListener('click', onClick)
       }
+      syncLabel(button)
       if (button.parentElement !== col) col.appendChild(button)
     }
     ensure()
