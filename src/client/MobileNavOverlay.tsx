@@ -231,18 +231,37 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
   useEffect(() => {
     if (!mobile) return
     let observer: MutationObserver | null = null
+    // Where the toolbar sat before the first move, so disposal can put it
+    // back exactly (its official slot is a row of its own after the tabs).
+    // Without this the toolbar stayed wedged in the tab row after a
+    // narrow→wide transition, with no mobile CSS left to compensate.
+    let origin: { parent: Node; next: Node | null } | null = null
     const ensure = (): void => {
       const dialog = document.querySelector('[aria-modal="true"]')
       if (dialog === null) return
       const nav = dialog.querySelector(':scope > [class$="_nav"]')
       const header = dialog.querySelector('[class$="_header"]')
       if (nav === null || header === null) return
-      if (header.parentElement !== nav) nav.appendChild(header)
+      if (header.parentElement === nav) return
+      if (origin === null && header.parentElement !== null) {
+        origin = { parent: header.parentElement, next: header.nextSibling }
+      }
+      nav.appendChild(header)
     }
     ensure()
     observer = new MutationObserver(ensure)
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer?.disconnect()
+    return () => {
+      observer?.disconnect()
+      if (origin === null) return
+      const header = document.querySelector('[aria-modal="true"] [class$="_header"]')
+      // Only restore while the recorded slot is still in the document: the
+      // dialog is usually gone by now, and re-inserting into a detached tree
+      // would resurrect it.
+      if (header !== null && origin.parent.isConnected) {
+        origin.parent.insertBefore(header, origin.next)
+      }
+    }
   }, [mobile])
 
   if (!mobile) return null
