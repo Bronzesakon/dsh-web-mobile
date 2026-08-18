@@ -1,7 +1,9 @@
 // misc — split from src/client/mobile.css.ts (2026-08-16), order preserved.
-// Do not reorder: styles/index.ts concatenates in this exact order.
+// Self-contained: each section (composer / tablet / desktop) carries its own
+// media query.
 
-export const MISC_CSS = `  /* ---------- hero composer on mobile ----------
+export const MISC_CSS = `@media (max-width: 1023px) {
+  /* ---------- hero composer on mobile ----------
      The official hero card carries a 2-line textarea plus a tall tool row,
      which reads oversized on a phone. Tighten the empty-state rhythm: keep
      the official centered hero, shrink the textarea line box, slim the card

@@ -1,7 +1,10 @@
 // compat — split from src/client/mobile.css.ts (2026-08-16), order preserved.
-// Do not reorder: styles/index.ts concatenates in this exact order.
+// Self-contained: every rule here is mobile-only and the media query opens
+// and closes in this file. Concatenation order still matters for the
+// cascade (compat intentionally overrides layout), just not for syntax.
 
-export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility ----------
+export const COMPAT_CSS = `@media (max-width: 1023px) {
+  /* ---------- dsh-web-ui family compatibility ----------
      The linxin666 plugin suite extends the shell frame directly:
        - aionui-panel appends two trailing grid columns (explorer / preview)
          plus absolute drag handles to [data-dsh-frame]; its 5-track inline
@@ -549,4 +552,5 @@ export const COMPAT_CSS = `  /* ---------- dsh-web-ui family compatibility -----
   [data-mobile-nav="frame"] [class$="_card"]:has([data-gitgraph-chip-anchor]) {
     padding-top: 40px !important;
   }
+}
 `

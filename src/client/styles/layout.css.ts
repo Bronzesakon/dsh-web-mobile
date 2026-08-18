@@ -1,5 +1,5 @@
 // layout — split from src/client/mobile.css.ts (2026-08-16), order preserved.
-// Do not reorder: styles/index.ts concatenates in this exact order.
+// Self-contained: the mobile media query opens and closes in this file.
 
 export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
 
@@ -481,4 +481,5 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])) > :last-child > :last-child {
     padding: 0 12px 24px !important;
   }
+}
 `
