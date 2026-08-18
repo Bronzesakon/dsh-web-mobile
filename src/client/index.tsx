@@ -1,12 +1,10 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { MobileNavToggle } from './MobileNavToggle.tsx'
-import { MobileNavOverlay } from './MobileNavOverlay.tsx'
 import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
 import { installDebugBadge } from './debug.ts'
-import { installPhoneChrome } from './effects/phone-chrome.ts'
+import { installFrameController, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
-import { installStatsLine } from './effects/stats-line.ts'
 import { NS, en, zh } from './locales.ts'
 import type { MobileNavKey } from './locales.ts'
 
@@ -40,6 +38,12 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'dsh-mobile-nav: styles')
 
+
+    // Shared mobile infrastructure: frame marker ownership and the single
+    // full-tree reconciler.
+    installFrameController()
+    installReconciler(ctx)
+    registerReconcileTasks(ctx)
   // Diagnostic overlay for phone-side repros (?mobile-nav-debug=1).
   installDebugBadge(ctx)
 
@@ -47,7 +51,7 @@ export function apply(ctx: ClientContext): void {
 
   installAionuiCompat(ctx)
 
-  installStatsLine(ctx)
+  
 
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
@@ -58,16 +62,6 @@ export function apply(ctx: ClientContext): void {
       toggleSidebar: () => ctx.layout.toggleSidebar(),
     }),
   }, MobileNavToggle))
-
-  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
-    name: 'shell.overlay',
-    id: 'mobile-nav-overlay',
-    order: 10,
-    locale: NS,
-    inject: () => ({
-      toggleSidebar: () => ctx.layout.toggleSidebar(),
-    }),
-  }, MobileNavOverlay))
 
   // Session log download, relocated from the session header to the drawer
   // footer on mobile (the header capsule is hidden by CSS); the drawer
