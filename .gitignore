@@ -4,3 +4,10 @@ node_modules/
 .learnings/
 .codegraph/
 docs/superpowers/
+
+# Playwright 本地测试工具（不提交）
+.local-tests/
+playwright.config.ts
+test/
+test-results/
+playwright-report/
