@@ -110,6 +110,23 @@ pnpm build
 - 移动端(390px):rail 消失、抽屉开合/遮罩/Escape、设置弹窗适配、会话行三点菜单弹出时抽屉保持;
 - 桌面端(≥1024px):与未安装时一致。
 
+### CDP 回归门禁
+
+前置:目标 DSH Web profile 已启动并加载当前 checkout/link 版本;从现有页面取得一个 session id,仅通过环境变量传入:
+
+````sh
+DSH_PROBE_SESSION_ID="$SESSION_ID" pnpm smoke:cdp
+````
+
+默认检查 390×844 下的插件启动、抽屉 backdrop/Escape、1280×800 桌面 no-op、宽→窄恢复与页面错误,连接地址默认 `http://127.0.0.1:3080/`。可覆盖:
+
+- `DSH_PROBE_URL`:目标 Web URL;
+- `DSH_PROBE_CHROME`:Chromium 可执行文件,默认 `chromium`;
+- `DSH_PROBE_TIMEOUT_MS`:单项等待上限,默认 `30000`;
+- `DSH_PROBE_REQUIRE_CHIP=1`:要求 gitgraph 分支胶囊存在并通过 reparent/按压/popover 几何检查。
+
+未安装可选 gitgraph 集成时默认明确输出 `SKIP`;核心失败、页面异常、超时或 strict 集成缺失均返回非零。探针连接现有实例,不创建/修改 profile,也不启动 `dsh web`。
+
 ## 兼容性
 
 需要 `:has()`(Chromium 105+);`prefers-reduced-motion: reduce` 下自动禁用动画。
