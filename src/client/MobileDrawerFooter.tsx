@@ -1,6 +1,7 @@
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { IconDownloadOutline16, IconPanelLeftOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { NS } from './locales.ts'
+import { getFrame } from './effects/phone-chrome.ts'
 
 /** Full props for the sidebar footer action entry. */
 export interface MobileDrawerFooterProps extends PropsRuntime<'sidebar.footer.action'>, PropsLocale<typeof NS> {
@@ -23,7 +24,7 @@ export interface MobileDrawerFooterProps extends PropsRuntime<'sidebar.footer.ac
 export function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t }: MobileDrawerFooterProps) {
   const sessionId = useSessions((state) => state.current)
   const openExplorer = (): void => {
-    document.querySelector('[data-mobile-nav="frame"]')?.setAttribute('data-aionui-explorer-open', '')
+    getFrame()?.setAttribute('data-aionui-explorer-open', '')
     toggleSidebar()
   }
   return (

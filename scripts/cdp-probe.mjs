@@ -76,18 +76,26 @@ const pass = (name, detail = '') => record('PASS', name, detail);
 const skip = (name, detail = '') => record('SKIP', name, detail);
 const fail = (name, detail = '') => record('FAIL', name, detail);
 
+// Non-throwing check: records PASS/FAIL and returns the condition so callers
+// can keep collecting independent failures instead of stopping at the first.
+function check(name, condition, detail = '') {
+  if (condition) pass(name, detail);
+  else fail(name, detail);
+  return condition;
+}
+
 function assertCheck(name, condition, detail = '') {
-  if (!condition) {
-    fail(name, detail);
-    throw new ProbeFailure(name, detail);
-  }
-  pass(name, detail);
+  return check(name, condition, detail);
 }
 
 function printSummary() {
   const count = (status) => results.filter((result) => result.status === status).length;
-  console.log(`SUMMARY pass=${count('PASS')} skip=${count('SKIP')} fail=${count('FAIL')}`);
-  return count('FAIL');
+  const passCount = count('PASS');
+  const skipCount = count('SKIP');
+  const failCount = count('FAIL');
+  const green = failCount === 0 && skipCount === 0;
+  console.log(`SUMMARY pass=${passCount} skip=${skipCount} fail=${failCount} green=${green}`);
+  return failCount;
 }
 
 function sleep(ms, signal) {
@@ -283,6 +291,23 @@ async function runCoreScenario(client, config, signal, pageErrors) {
     }
   });
 
+  // Wrapper that records a normal FAIL on timeout so the core scenario can keep
+  // collecting independent failures instead of aborting at the first drawer
+  // transition problem.
+  const waitDrawerChecked = async (label, wantOpen, checkName) => {
+    try {
+      await waitDrawerState(label, wantOpen);
+      pass(checkName, wantOpen ? 'open=true' : 'closed=true');
+      return true;
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        check(checkName, false, `${label} timed out`);
+        return false;
+      }
+      throw error;
+    }
+  };
+
   // An open control is usable only when its center hit-tests back to it: the
   // sliding drawer can cover the toggle while animating out after a close.
   const waitControlReachable = (label, selector) => waitFor(label, config.timeoutMs, signal, async () => {
@@ -302,6 +327,7 @@ async function runCoreScenario(client, config, signal, pageErrors) {
   });
 
   // Pick the first visible open control: header toggle, else floating fab.
+  let drawerUsable = true;
   let openSelector = null;
   for (const selector of MOBILE_CONTROL_SELECTORS) {
     try {
@@ -313,43 +339,49 @@ async function runCoreScenario(client, config, signal, pageErrors) {
     }
   }
   if (openSelector === null) {
-    fail('mobile.open-control', 'neither toggle nor fab became visible before deadline');
-    throw new ProbeFailure('mobile.open-control', 'neither toggle nor fab became visible before deadline');
+    check('mobile.open-control', false, 'neither toggle nor fab became visible before deadline');
+    drawerUsable = false;
   }
 
-  // Open the drawer with the selected control and assert the expanded state.
-  await clickSelector(client, openSelector);
-  await waitDrawerState('mobile drawer open', true);
+  if (drawerUsable) {
+    // Open the drawer with the selected control and assert the expanded state.
+    await clickSelector(client, openSelector);
+    if (!(await waitDrawerChecked('mobile drawer open', true, 'mobile.drawer.open'))) drawerUsable = false;
 
-  // Close via the backdrop, at a point derived from live geometry: midway
-  // between the open drawer's right edge and the viewport right edge.
-  const drawerRect = await rectFor(client, MOBILE_DRAWER_SELECTOR);
-  if (drawerRect === null) {
-    fail('geometry.drawer', 'drawer rect unavailable while open');
-    throw new ProbeFailure('geometry.drawer', 'drawer rect unavailable while open');
-  }
-  const viewport = await client.evaluate('({ width: innerWidth, height: innerHeight })');
-  const backdropX = (drawerRect.right + viewport.width) / 2;
-  const backdropY = viewport.height / 2;
-  const overBackdrop = await client.evaluate(`(() => {
-    const element = document.elementFromPoint(${backdropX}, ${backdropY});
-    return element !== null && element.closest(${JSON.stringify(MOBILE_BACKDROP_SELECTOR)}) !== null;
-  })()`);
-  if (!overBackdrop) {
-    fail('mobile.backdrop.point', `(${Math.round(backdropX)}, ${Math.round(backdropY)}) not over backdrop`);
-    throw new ProbeFailure('mobile.backdrop.point', `(${Math.round(backdropX)}, ${Math.round(backdropY)}) not over backdrop`);
-  }
-  await clickPoint(client, backdropX, backdropY);
-  await waitDrawerState('mobile backdrop close', false);
-  pass('mobile.drawer.backdrop', `drawerWidth=${Math.round(drawerRect.width)} clickX=${Math.round(backdropX)}`);
+    // Close via the backdrop, at a point derived from live geometry: midway
+    // between the open drawer's right edge and the viewport right edge.
+    const drawerRect = await rectFor(client, MOBILE_DRAWER_SELECTOR);
+    if (drawerRect === null) {
+      check('geometry.drawer', false, 'drawer rect unavailable while open');
+      drawerUsable = false;
+    } else {
+      const viewport = await client.evaluate('({ width: innerWidth, height: innerHeight })');
+      const backdropX = (drawerRect.right + viewport.width) / 2;
+      const backdropY = viewport.height / 2;
+      const overBackdrop = await client.evaluate(`(() => {
+        const element = document.elementFromPoint(${backdropX}, ${backdropY});
+        return element !== null && element.closest(${JSON.stringify(MOBILE_BACKDROP_SELECTOR)}) !== null;
+      })()`);
+      if (!overBackdrop) {
+        check('mobile.backdrop.point', false, `(${Math.round(backdropX)}, ${Math.round(backdropY)}) not over backdrop`);
+        drawerUsable = false;
+      } else {
+        await clickPoint(client, backdropX, backdropY);
+        if (!(await waitDrawerChecked('mobile backdrop close', false, 'mobile.drawer.backdrop-close'))) drawerUsable = false;
+        if (drawerUsable) pass('mobile.drawer.backdrop', `drawerWidth=${Math.round(drawerRect.width)} clickX=${Math.round(backdropX)}`);
+      }
+    }
 
-  // Reopen with the same live selector, then close with a real Escape key.
-  await waitControlReachable('mobile reopen control', openSelector);
-  await clickSelector(client, openSelector);
-  await waitDrawerState('mobile drawer reopen', true);
-  await pressEscape(client);
-  await waitDrawerState('mobile escape close', false);
-  pass('mobile.drawer.escape', 'collapsed=true');
+    if (drawerUsable) {
+      // Reopen with the same live selector, then close with a real Escape key.
+      await waitControlReachable('mobile reopen control', openSelector);
+      await clickSelector(client, openSelector);
+      if (!(await waitDrawerChecked('mobile drawer reopen', true, 'mobile.drawer.reopen'))) drawerUsable = false;
+      await pressEscape(client);
+      if (!(await waitDrawerChecked('mobile escape close', false, 'mobile.drawer.escape-close'))) drawerUsable = false;
+      if (drawerUsable) pass('mobile.drawer.escape', 'collapsed=true');
+    }
+  }
 
   // Desktop: the plugin must be a no-op at 1280x800.
   await setViewport(client, 1280, 800, false);
@@ -372,6 +404,52 @@ async function runCoreScenario(client, config, signal, pageErrors) {
     return !state.frame && !state.preview && !state.toggleVisible && !state.fabVisible ? state : null;
   });
   pass('desktop.no-op', 'frame=absent preview=absent controls=hidden');
+
+  // Exact 1024px boundary: still desktop (mobile query is max-width: 1023px).
+  await setViewport(client, 1024, 800, false);
+  await waitFor('desktop boundary 1024 no-op', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => {
+      const visible = (selector) => {
+        const element = document.querySelector(selector);
+        if (element === null) return false;
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      return {
+        frame: document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)}) !== null,
+        preview: document.querySelector('[data-mobile-preview-full]') !== null,
+        toggleVisible: visible(${JSON.stringify(MOBILE_TOGGLE_SELECTOR)}),
+        fabVisible: visible(${JSON.stringify(MOBILE_FAB_SELECTOR)}),
+      };
+    })()`);
+    return !state.frame && !state.preview && !state.toggleVisible && !state.fabVisible ? state : null;
+  });
+  pass('desktop.boundary-1024', 'frame=absent preview=absent controls=hidden');
+
+  // Exact 1023px boundary: still mobile, so the frame and an open control must
+  // come back.
+  await setViewport(client, 1023, 800, true);
+  await waitFor('mobile boundary 1023 re-arm', config.timeoutMs, signal, async () => {
+    const state = await client.evaluate(`(() => {
+      const visible = (selector) => {
+        const element = document.querySelector(selector);
+        if (element === null) return false;
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      const frame = document.querySelector(${JSON.stringify(MOBILE_FRAME_SELECTOR)});
+      return {
+        frame: frame !== null,
+        collapsed: frame === null ? null : frame.hasAttribute('data-sidebar-collapsed'),
+        toggleVisible: visible(${JSON.stringify(MOBILE_TOGGLE_SELECTOR)}),
+        fabVisible: visible(${JSON.stringify(MOBILE_FAB_SELECTOR)}),
+      };
+    })()`);
+    return state.frame && state.collapsed === true && (state.toggleVisible || state.fabVisible) ? state : null;
+  });
+  pass('mobile.boundary-1023', 'frame=present control=visible collapsed=true');
 
   // Narrow breakpoint re-arm: frame back, an open control visible, and the
   // drawer closed again so the next scenario starts from a stable state.
@@ -400,12 +478,9 @@ async function runCoreScenario(client, config, signal, pageErrors) {
   // Surface captured page errors (deduplicated); a real-combination gate must
   // fail on them.
   const uniqueErrors = [...new Set(pageErrors)];
-  if (uniqueErrors.length > 0) {
-    const detail = `count=${uniqueErrors.length} first=${uniqueErrors[0].slice(0, 160)}`;
-    fail('page.errors', detail);
-    throw new ProbeFailure('page.errors', detail);
-  }
-  pass('page.errors', 'count=0');
+  check('page.errors', uniqueErrors.length === 0, uniqueErrors.length > 0
+    ? `count=${uniqueErrors.length} first=${uniqueErrors[0].slice(0, 160)}`
+    : 'count=0');
 }
 
 async function runGitgraphScenario(client, config, signal) {
@@ -439,8 +514,8 @@ async function runGitgraphScenario(client, config, signal) {
   // finally, so a failed assertion cannot leave the pointer pressed.
   const chipRect = await rectFor(client, CHIP_SELECTOR);
   if (chipRect === null) {
-    fail('integration.gitgraph.chip-geometry', 'chip not visible');
-    throw new ProbeFailure('integration.gitgraph.chip-geometry', 'chip not visible');
+    check('integration.gitgraph.chip-geometry', false, 'chip not visible');
+    return;
   }
   const pressX = chipRect.left + chipRect.width / 2;
   const pressY = chipRect.top + chipRect.height / 2;
@@ -462,25 +537,38 @@ async function runGitgraphScenario(client, config, signal) {
   }
 
   // Step 4: popover geometry after release: in-viewport rect with options.
-  const popoverState = await waitFor('gitgraph popover', config.timeoutMs, signal, async () => {
-    const state = await client.evaluate(`(() => {
-      const popover = document.querySelector('[data-gitgraph-popover]');
-      if (!popover) return null;
-      const rect = popover.getBoundingClientRect();
-      return {
-        optionCount: popover.querySelectorAll('[role="option"]').length,
-        inViewport: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight,
-        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
-      };
-    })()`);
-    return state || null;
-  });
+  // A timeout is recorded as a normal FAIL so later cleanup still runs and the
+  // run can continue collecting other failures.
+  let popoverState = null;
   try {
-    assertCheck('integration.gitgraph.popover', popoverState.optionCount > 0 && popoverState.inViewport, `options=${popoverState.optionCount} rect=${JSON.stringify(popoverState.rect)}`);
+    popoverState = await waitFor('gitgraph popover', config.timeoutMs, signal, async () => {
+      const state = await client.evaluate(`(() => {
+        const popover = document.querySelector('[data-gitgraph-popover]');
+        if (!popover) return null;
+        const rect = popover.getBoundingClientRect();
+        return {
+          optionCount: popover.querySelectorAll('[role="option"]').length,
+          inViewport: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight,
+          rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        };
+      })()`);
+      return state || null;
+    });
+  } catch (error) {
+    if (error instanceof TimeoutError) {
+      check('integration.gitgraph.popover', false, 'popover did not open before deadline');
+    } else {
+      throw error;
+    }
+  }
+  try {
+    if (popoverState !== null) {
+      assertCheck('integration.gitgraph.popover', popoverState.optionCount > 0 && popoverState.inViewport, `options=${popoverState.optionCount} rect=${JSON.stringify(popoverState.rect)}`);
+    }
   } finally {
     // Escape cleanup runs even when the popover assertion fails, so teardown
     // always starts from a neutral UI state; a cleanup timeout on the failure
-    // path is logged but must not mask the original ProbeFailure.
+    // path is logged but must not mask the original failure.
     await pressEscape(client);
     try {
       await waitFor('gitgraph popover closed', config.timeoutMs, signal, async () => {

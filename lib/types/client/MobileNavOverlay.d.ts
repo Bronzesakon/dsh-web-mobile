@@ -6,10 +6,11 @@ export interface MobileNavOverlayProps extends PropsRuntime<'shell.overlay'>, Pr
     toggleSidebar: () => void;
 }
 /**
- * Mobile shell overlay: owns the `data-mobile-nav` marker on the AppFrame
- * element (the CSS restructure keys off it), mirrors the frame's collapsed
- * state into React state, and renders the dimmed backdrop plus a floating
- * directory button for the hero/blank phases that have no session header.
+ * Mobile shell overlay: mirrors the frame's collapsed state into React state,
+ * renders the dimmed backdrop plus a floating directory button for the
+ * hero/blank phases that have no session header. The frame marker itself is
+ * owned by the shared frame controller; reparenting work lives in the shared
+ * DOM reconciler.
  */
 export declare function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps): import("react").JSX.Element | null;
 //# sourceMappingURL=MobileNavOverlay.d.ts.map

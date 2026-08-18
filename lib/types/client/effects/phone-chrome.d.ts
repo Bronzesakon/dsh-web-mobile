@@ -1,4 +1,42 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+/** Same breakpoint as the shell's SIDEBAR_AUTO_COLLAPSE (viewport < 1024). */
+export declare const MOBILE_QUERY = "(max-width: 1023px)";
+/** Desktop no-op boundary, kept next to the mobile query for one source of truth. */
+export declare const DESKTOP_QUERY = "(min-width: 1024px)";
+/** Live matchMedia hook for the narrow breakpoint. */
+export declare function useMobile(): boolean;
+/**
+ * Re-arm a mobile-only DOM effect on every width change. Replaces the
+ * repeated matchMedia + change-listener scaffold so all breakpoint strings
+ * live in one place.
+ */
+export declare function installMobileEffect(ctx: ClientContext, label: string, install: (narrow: MediaQueryList) => (() => void) | undefined): void;
+/** The AppFrame element: direct parent of the shell overlay layer. */
+export declare function findFrame(): HTMLElement | null;
+/** Resolve the plugin-owned frame marker, falling back to the raw shell frame. */
+export declare function getFrame(): HTMLElement | null;
+/**
+ * Frame marker controller: owns `data-mobile-nav="frame"` and every plugin
+ * marker that can survive on the shell-owned frame. Installed once at apply
+ * time so effects no longer each need to find/set/clear the frame.
+ */
+export declare function installFrameController(): void;
+/** One unit of DOM reconciliation driven by the shared full-tree observer. */
+export interface ReconcilerTask {
+    readonly name: string;
+    /** Called once on activation and after every observed DOM mutation. */
+    ensure(): void;
+    /** Called on deactivation, disposal, or explicit removal. */
+    dispose(): void;
+}
+/**
+ * One full-tree MutationObserver for every mobile DOM reconciler. Tasks can be
+ * registered from React or plain effects; they only run while the mobile
+ * breakpoint is active and are re-armed automatically on width changes.
+ */
+export declare function installReconciler(ctx: ClientContext): void;
+/** Register a reconciler task. The returned disposer removes it immediately. */
+export declare function addReconcilerTask(task: ReconcilerTask): () => void;
 /**
  * Phone chrome: KEEP the system status bar (no fullscreen) and make it
  * blend into the page. On narrow screens:
@@ -17,4 +55,10 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
  *   touch-action: manipulation (which keeps pan and pinch zoom).
  */
 export declare function installPhoneChrome(ctx: ClientContext): void;
+/**
+ * Register the shared DOM reconciler tasks that used to each own a full-tree
+ * MutationObserver. The React FAB task is registered separately from the
+ * overlay component because it drives React state.
+ */
+export declare function registerReconcileTasks(ctx: ClientContext): void;
 //# sourceMappingURL=phone-chrome.d.ts.map

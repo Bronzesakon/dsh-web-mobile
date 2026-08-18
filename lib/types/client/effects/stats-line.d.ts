@@ -1,3 +1,3 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
-export declare function installStatsLine(ctx: ClientContext): void;
+import type { ReconcilerTask } from './phone-chrome.ts';
+export declare function createStatsLineTask(): ReconcilerTask;
 //# sourceMappingURL=stats-line.d.ts.map
