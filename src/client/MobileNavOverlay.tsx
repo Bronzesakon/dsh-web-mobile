@@ -56,8 +56,16 @@ export function MobileNavOverlay({ toggleSidebar, t }: MobileNavOverlayProps) {
     observer.observe(frame, { attributes: true, attributeFilter: ['data-sidebar-collapsed'] })
     return () => {
       observer.disconnect()
+      // Drop EVERY marker this plugin can leave on the shell-owned frame.
+      // The frame outlives our unmount, and the explorer / preview markers
+      // are written by the header toggle and the drawer footer — not here —
+      // so leaving them behind survived a narrow→wide→narrow trip and popped
+      // the sheet open again on the next mobile mount, which is exactly the
+      // restored-state-covers-the-UI failure this plugin exists to prevent.
       frame.removeAttribute('data-mobile-nav')
       frame.removeAttribute('data-mobile-preview-full')
+      frame.removeAttribute('data-aionui-explorer-open')
+      frame.removeAttribute('data-aionui-preview-open')
     }
   }, [mobile])
 
