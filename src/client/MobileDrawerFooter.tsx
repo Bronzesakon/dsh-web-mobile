@@ -24,6 +24,9 @@ export interface MobileDrawerFooterProps extends PropsRuntime<'sidebar.footer.ac
 export function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t }: MobileDrawerFooterProps) {
   const sessionId = useSessions((state) => state.current)
   const openExplorer = (): void => {
+    // Yield the preview sheet first (compat.css gives preview precedence
+    // over explorer), then open the explorer and close the drawer.
+    getFrame()?.removeAttribute('data-aionui-preview-open')
     getFrame()?.setAttribute('data-aionui-explorer-open', '')
     toggleSidebar()
   }

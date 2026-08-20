@@ -25,7 +25,10 @@ export function createStatsLineTask(): ReconcilerTask {
       const text = (el.textContent ?? '').trim()
       if (!/^TPS\s+\d/.test(text)) continue
       if (el.children.length > 0) continue
-      if (tpsOrigin === null && el.parentElement !== null) {
+      // The composer stack can be rebuilt by React between mutations:
+      // refresh the origin every time we actually move the TPS readout, so
+      // disposal returns it where it currently belongs.
+      if (el.parentElement !== null) {
         tpsOrigin = { parent: el.parentElement, next: el.nextSibling }
       }
       stats.appendChild(el)
@@ -55,16 +58,23 @@ export function createStatsLineTask(): ReconcilerTask {
     name: 'stats-line',
     ensure: mark,
     dispose: () => {
-      // Hand the official layout back: drop the marker that drives the
-      // one-line strip and return the TPS readout to its own row.
+      // Hand the official layout back: return the TPS readout to its own
+      // row, then drop the marker that drives the one-line strip.
+      if (tpsOrigin !== null && tpsOrigin.parent.isConnected) {
+        // Find the TPS readout only inside the marked stats strip we moved
+        // it into — a global text search could pick up a different element.
+        for (const stats of document.querySelectorAll('[data-mobile-nav="stats"]')) {
+          const tps = [...stats.querySelectorAll('div')].find(
+            (el) => el.children.length === 0 && /^TPS\s+\d/.test((el.textContent ?? '').trim()),
+          )
+          if (tps !== undefined) {
+            tpsOrigin.parent.insertBefore(tps, tpsOrigin.next)
+            break
+          }
+        }
+      }
       for (const el of document.querySelectorAll('[data-mobile-nav="stats"]')) {
         el.removeAttribute('data-mobile-nav')
-      }
-      if (tpsOrigin !== null && tpsOrigin.parent.isConnected) {
-        const tps = [...tpsOrigin.parent.ownerDocument!.querySelectorAll('div')].find(
-          (el) => el.children.length === 0 && /^TPS\s+\d/.test((el.textContent ?? '').trim()),
-        )
-        if (tps !== undefined) tpsOrigin.parent.insertBefore(tps, tpsOrigin.next)
       }
       tpsOrigin = null
     },

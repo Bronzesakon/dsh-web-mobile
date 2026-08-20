@@ -525,19 +525,19 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   /* ---------- git-graph branch chip: inside the composer card ----------
      The branch chip (conversation.input.dock) floats between the dock rows
      and the input card; on a phone it reads as a stray capsule crowding the
-     composer. A client effect (MobileNavOverlay) reparents the chip INTO
-     the composer card; these rules pin it to the card's top-left and give
-     the card a dedicated chip row. The card is position: relative by the
-     official stylesheet, so the absolute anchor resolves against it. The
-     plugin's own sheet sets all four offsets on the anchor, so right/bottom
-     must be neutralized too. Scope is the frame marker + the anchor
-     attribute (NOT the dock slot — the reparenting moves the chip out of
-     the dock's subtree). Desktop untouched: the frame marker only exists
-     below 1024px, and the effect restores the chip to the dock when the
-     viewport widens. Chip row geometry (2026-08-16, user feedback): 48px
-     padding left a 16px dead gap between the chip and the input line and
-     made the composer read too tall; the row is now 40px = chip (24px) at
-     top 12px + ~4px to the textarea — the chip sits slightly lower and
+     composer. A client reconciler task (git-chip-reparent) reparents the
+     chip INTO the composer card; these rules pin it to the card's top-left
+     and give the card a dedicated chip row. The card is position: relative
+     by the official stylesheet, so the absolute anchor resolves against it.
+     The plugin's own sheet sets all four offsets on the anchor, so
+     right/bottom must be neutralized too. Scope is the frame marker + the
+     anchor attribute (NOT the dock slot — the reparenting moves the chip
+     out of the dock's subtree). Desktop untouched: the frame marker only
+     exists below 1024px, and the effect restores the chip to the dock when
+     the viewport widens. Chip row geometry (2026-08-16, user feedback):
+     48px padding left a 16px dead gap between the chip and the input line
+     and made the composer read too tall; the row is now 40px = chip (24px)
+     at top 12px + ~4px to the textarea — the chip sits slightly lower and
      the gap is compressed without touching the official height budget
      further. */
 

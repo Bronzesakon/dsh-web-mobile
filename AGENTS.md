@@ -10,11 +10,10 @@ Names differ by boundary: the README/GitHub project is `dsh-web-mobile`, the npm
 
 1. `cordis.patch.yml` inserts the `dsh-mobile-nav` host row. `src/index.ts` intentionally exports an empty `apply()` so the plugin is visible to the host Loader.
 2. `package.json` exposes `./client` and declares `dsh.client.platform: "web"`; DSH discovers the browser half from `src/client/index.tsx`.
-3. The client fiber injects `slots`, `layout`, `locale`, and `sessionLogDownload`. Its `apply(ctx)` registers locale dictionaries, injects one stylesheet, installs diagnostics/effects, and registers three slots:
+3. The client fiber injects `slots`, `layout`, `locale`, and `sessionLogDownload`. Its `apply(ctx)` registers locale dictionaries, injects one stylesheet, installs diagnostics/effects, and registers two slots:
    - `conversation.session.header.actions` → `MobileNavToggle` (`order: 10`): drawer and Files controls.
-   - `shell.overlay` → `MobileNavOverlay` (`order: 10`): backdrop, FAB, Escape/click handling, and frame state.
    - `sidebar.footer.action` → `MobileDrawerFooter` (`order: 5`): Files and session-log actions. The order keeps these below the remote icon row and above usage badges.
-4. `MobileNavOverlay` marks the app frame with `data-mobile-nav="frame"` and mirrors sidebar state. Effects mark third-party UI with `data-aionui-*` and preview/fullscreen attributes; CSS consumes those markers to drive layout.
+4. A shared full-tree reconciler (`installReconciler` + `addReconcilerTask` in `src/client/effects/phone-chrome.ts`) owns frame markers, settings-toolbar/chip reparenting, preview-fullscreen toggle, sheet-rise replay, and stats-line marking. Tasks run only while the mobile breakpoint is active, coalesced to one pass per animation frame. `installFrameController` / `installReconciler` / `registerReconcileTasks` each return a disposer collected in one `ctx.effect` in `apply`, so a same-environment plugin reload rebuilds the reconciler from scratch.
 5. `src/client/effects/` handles phone chrome, dsh-web-ui compatibility, statistics-row marking, and the optional debug badge. DOM integrations use observers and idempotent reconciliation because third-party React renders can replace injected nodes.
 6. `src/client/styles/index.ts` concatenates CSS modules in the load-bearing order `base → layout → compat → misc`; the client injects the result as one `<style data-plugin>` tag. Mobile rules target `(max-width: 1023px)`; desktop rules hide mobile controls and preserve the uninstalled layout.
 
@@ -80,7 +79,6 @@ The config dump should contain the `dsh-mobile-nav` row. There is no package `de
 - `tsconfig.client.json`: strict client/CommonJS compilation to `.client-build/`, declaration output, path mappings, and import-extension rewriting.
 - `cordis.patch.yml`: the single host plugin row.
 - `src/client/index.tsx`: client composition, fiber injection, effect installation, locale registration, and slot registration.
-- `src/client/MobileNavOverlay.tsx`: frame marker, drawer state, overlay interactions, and DOM reparenting.
 - `src/client/MobileNavToggle.tsx` / `MobileDrawerFooter.tsx`: header and drawer actions.
 - `src/client/effects/*.ts`: phone chrome, third-party compatibility, statistics, and diagnostics.
 - `src/client/debug.ts`: opt-in `?mobile-nav-debug=1` runtime diagnostics and error capture.
@@ -110,3 +108,9 @@ After source/layout changes, install the linked plugin in a real DSH Web profile
 For phone-side debugging, add `?mobile-nav-debug=1` to display live viewport, frame/marker, floating-panel, and captured-JavaScript-error state. Use a fresh browser context or clear site data when a device appears to load stale UI; compare the served client revision with `sha1sum lib/client.js` before changing code. The optional `node scripts/cdp-probe.mjs` expects a local DSH server at `127.0.0.1:3080` and is a targeted smoke probe, not a replacement for real-profile checks.
 
 Validate compatible third-party versions when exercising integrations: `dsh-web-ui-all` 0.1.14, `dshmarket` 1.2.2, `dsh-usage-stats` 0.1.2, and `@omdsh-dev/dsh-genui` 0.8.3.
+
+## Pitfalls
+
+- **CSS 互斥优先级会造成「按钮看似失效」**：同一 marker 族的互斥规则（如 preview 打开时 explorer `visibility:hidden`）会让功能代码正确但 UI 无响应。排查「点了没反应」先对照 `compat.css`/`layout.css` 里该元素的互斥声明，再动 JS。打开 explorer 前必须先清 `data-aionui-preview-open`（两个入口：`MobileNavToggle.toggleExplorer` 与 `MobileDrawerFooter.openExplorer`），与「点文件行开 preview」保持对称。
+- **全树 reconciler 的 task 必须幂等且 dispose 可恢复**：`ensure` 每次移动第三方 DOM 时刷新 `origin`（React 会重建节点）；`dispose` 找回元素限定在被移动容器内，不用全局文本搜索；task 注册的 disposer 不得丢弃，否则同环境插件重载后 reconciler 失效。
+- **文档/注释与实现的漂移**：`MobileNavOverlay.tsx` 已删除（2026-08-16），其职责由 shared reconciler task（`settings-toolbar-reparent`/`git-chip-reparent`）承担。注释与架构描述提到该组件即视为过时，改为引用 task 名。

@@ -415,9 +415,9 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   }
   /* The tab list scrolls in the space left by the toolbar: the toolbar
      (config file + close) is reparented INTO this nav row by a client
-     effect (MobileNavOverlay), so the tab list must be anchored by its
-     class, NOT by :last-child (the reparented toolbar becomes the nav's
-     new last child). */
+     reconciler task (settings-toolbar-reparent), so the tab list must be
+     anchored by its class, NOT by :last-child (the reparented toolbar
+     becomes the nav's new last child). */
   [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])) > :first-child [class$="_navList"] {
     flex: 1 1 auto !important;
     min-width: 0 !important;

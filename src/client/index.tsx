@@ -39,19 +39,26 @@ export function apply(ctx: ClientContext): void {
   }, 'dsh-mobile-nav: styles')
 
 
-    // Shared mobile infrastructure: frame marker ownership and the single
-    // full-tree reconciler.
-    installFrameController()
-    installReconciler(ctx)
-    registerReconcileTasks(ctx)
+  // Shared mobile infrastructure: frame marker ownership and the single
+  // full-tree reconciler. Installed inside one effect so a plugin reload in
+  // the same JS environment tears the whole reconciler down and rebuilds it.
+  ctx.effect(() => {
+    const stops = [
+      installFrameController(),
+      installReconciler(ctx),
+      registerReconcileTasks(ctx),
+    ]
+    return () => {
+      for (const stop of stops) stop()
+    }
+  }, 'dsh-mobile-nav: reconciler infrastructure')
+
   // Diagnostic overlay for phone-side repros (?mobile-nav-debug=1).
   installDebugBadge(ctx)
 
   installPhoneChrome(ctx)
 
   installAionuiCompat(ctx)
-
-  
 
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',

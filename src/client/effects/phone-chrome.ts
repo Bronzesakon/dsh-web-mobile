@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { createPreviewCloseTask, createSheetRiseTask } from './aionui-compat.ts'
@@ -13,18 +12,6 @@ export const MOBILE_QUERY = '(max-width: 1023px)'
 
 /** Desktop no-op boundary, kept next to the mobile query for one source of truth. */
 export const DESKTOP_QUERY = '(min-width: 1024px)'
-
-/** Live matchMedia hook for the narrow breakpoint. */
-export function useMobile(): boolean {
-  const [mobile, setMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches)
-  useEffect(() => {
-    const query = window.matchMedia(MOBILE_QUERY)
-    const onChange = (event: MediaQueryListEvent) => setMobile(event.matches)
-    query.addEventListener('change', onChange)
-    return () => query.removeEventListener('change', onChange)
-  }, [])
-  return mobile
-}
 
 /**
  * Re-arm a mobile-only DOM effect on every width change. Replaces the
@@ -65,13 +52,15 @@ export function getFrame(): HTMLElement | null {
 /**
  * Frame marker controller: owns `data-mobile-nav="frame"` and every plugin
  * marker that can survive on the shell-owned frame. Installed once at apply
- * time so effects no longer each need to find/set/clear the frame.
+ * time so effects no longer each need to find/set/clear the frame. Returns a
+ * disposer that unregisters the task and resets the installed flag, so a
+ * same-environment plugin reload can rebuild the reconciler from scratch.
  */
-export function installFrameController(): void {
-  if (frameControllerInstalled) return
+export function installFrameController(): () => void {
+  if (frameControllerInstalled) return () => {}
   frameControllerInstalled = true
   let frame: HTMLElement | null = null
-  addReconcilerTask({
+  const removeTask = addReconcilerTask({
     name: 'frame-marker',
     ensure: () => {
       frame = findFrame()
@@ -89,6 +78,10 @@ export function installFrameController(): void {
       frame = null
     },
   })
+  return () => {
+    removeTask()
+    frameControllerInstalled = false
+  }
 }
 
 /** One unit of DOM reconciliation driven by the shared full-tree observer. */
@@ -127,12 +120,23 @@ function runTasks(tasks: Set<ReconcilerTask>): void {
  * registered from React or plain effects; they only run while the mobile
  * breakpoint is active and are re-armed automatically on width changes.
  */
-export function installReconciler(ctx: ClientContext): void {
-  if (reconcilerInstalled) return
+export function installReconciler(ctx: ClientContext): () => void {
+  if (reconcilerInstalled) return () => {}
   reconcilerInstalled = true
   installMobileEffect(ctx, 'dsh-mobile-nav: DOM reconciler', () => {
     const tasks = new Set(registered)
-    const observer = new MutationObserver(() => runTasks(tasks))
+    // Coalesce every mutation burst (typing, animations, per-token TPS
+    // re-renders) into one full-tree pass per animation frame instead of
+    // running every task synchronously per mutation.
+    let raf = 0
+    const schedule = (): void => {
+      if (raf !== 0) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        runTasks(tasks)
+      })
+    }
+    const observer = new MutationObserver(schedule)
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -149,6 +153,7 @@ export function installReconciler(ctx: ClientContext): void {
     active = { tasks, observer }
     runTasks(tasks)
     return () => {
+      if (raf !== 0) cancelAnimationFrame(raf)
       observer.disconnect()
       for (const task of tasks) {
         try {
@@ -160,6 +165,9 @@ export function installReconciler(ctx: ClientContext): void {
       active = null
     }
   })
+  return () => {
+    reconcilerInstalled = false
+  }
 }
 
 /** Register a reconciler task. The returned disposer removes it immediately. */
@@ -306,7 +314,10 @@ function createSettingsToolbarTask(): ReconcilerTask {
       const header = dialog.querySelector('[class$="_header"]')
       if (nav === null || header === null) return
       if (header.parentElement === nav) return
-      if (origin === null && header.parentElement !== null) {
+      // The dialog DOM can be rebuilt by React between mutations: refresh
+      // the origin every time we actually move the header, so disposal
+      // restores it where it currently belongs, not where it was first seen.
+      if (header.parentElement !== null) {
         origin = { parent: header.parentElement, next: header.nextSibling }
       }
       nav.appendChild(header)
@@ -325,17 +336,25 @@ function createSettingsToolbarTask(): ReconcilerTask {
 /**
  * Register the shared DOM reconciler tasks that used to each own a full-tree
  * MutationObserver. The React FAB task is registered separately from the
- * overlay component because it drives React state.
+ * overlay component because it drives React state. Returns a disposer that
+ * unregisters every task and resets the flag, so a same-environment plugin
+ * reload can rebuild the reconciler from scratch.
  */
-export function registerReconcileTasks(ctx: ClientContext): void {
-  if (reconcileTasksRegistered) return
+export function registerReconcileTasks(ctx: ClientContext): () => void {
+  if (reconcileTasksRegistered) return () => {}
   reconcileTasksRegistered = true
   const t = ctx.locale.bind(NS)
-  addReconcilerTask(createPreviewFullscreenTask(t))
-  addReconcilerTask(createGitChipTask())
-  addReconcilerTask(createSettingsToolbarTask())
-  addReconcilerTask(createPreviewCloseTask())
-  addReconcilerTask(createSheetRiseTask())
-  addReconcilerTask(createStatsLineTask())
+  const removeTasks = [
+    addReconcilerTask(createPreviewFullscreenTask(t)),
+    addReconcilerTask(createGitChipTask()),
+    addReconcilerTask(createSettingsToolbarTask()),
+    addReconcilerTask(createPreviewCloseTask()),
+    addReconcilerTask(createSheetRiseTask()),
+    addReconcilerTask(createStatsLineTask()),
+  ]
+  return () => {
+    for (const remove of removeTasks) remove()
+    reconcileTasksRegistered = false
+  }
 }
 
