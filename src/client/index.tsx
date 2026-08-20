@@ -1,10 +1,12 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { MobileNavToggle } from './MobileNavToggle.tsx'
 import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
+import { HapticRow } from './HapticRow.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
 import { installDebugBadge } from './debug.ts'
 import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
+import { installHaptic } from './effects/haptic.ts'
 import { NS, en, zh } from './locales.ts'
 import type { MobileNavKey } from './locales.ts'
 
@@ -63,6 +65,7 @@ export function apply(ctx: ClientContext): void {
 
   installAionuiCompat(ctx)
 
+  installHaptic(ctx)
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
     id: 'mobile-nav-toggle',
@@ -72,6 +75,19 @@ export function apply(ctx: ClientContext): void {
       toggleSidebar: () => ctx.layout.toggleSidebar(),
     }),
   }, MobileNavToggle))
+
+  // General-settings preference row: pill switch for the tap vibration
+  // (client-only localStorage preference). Order 30 stacks it after the
+  // official rows (permission -20 / language 0 / appearance 10 /
+  // composer-enter 20). The stylesheet hides the row on desktop, where the
+  // vibration can never fire.
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'mobile-haptics',
+    order: 30,
+    locale: NS,
+    inject: () => ({}),
+  }, HapticRow))
 
   // Session log download, relocated from the session header to the drawer
   // footer on mobile (the header capsule is hidden by CSS); the drawer
@@ -96,11 +112,12 @@ export function apply(ctx: ClientContext): void {
   }, MobileDrawerFooter))
 }
 
-// Type-only augmentation imports: pull the layout / conversation / sidebar
-// SlotMap merges and the sessionLogDownload service typing into this program
-// without any runtime import.
+// Type-only augmentation imports: pull the layout / conversation / sidebar /
+// settings SlotMap merges and the sessionLogDownload service typing into this
+// program without any runtime import.
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-session-log-export/client'

@@ -13,6 +13,7 @@ Names differ by boundary: the README/GitHub project is `dsh-web-mobile`, the npm
 3. The client fiber injects `slots`, `layout`, `locale`, and `sessionLogDownload`. Its `apply(ctx)` registers locale dictionaries, injects one stylesheet, installs diagnostics/effects, and registers two slots:
    - `conversation.session.header.actions` → `MobileNavToggle` (`order: 10`): drawer and Files controls.
    - `sidebar.footer.action` → `MobileDrawerFooter` (`order: 5`): Files and session-log actions. The order keeps these below the remote icon row and above usage badges.
+   - `settings.general.item` → `HapticRow` (`order: 30`): tap-haptic pill switch with intensity selector, stacked after the official rows (permission -20 / language 0 / appearance 10 / composer-enter 20). The stylesheet hides the row on desktop, where vibration can never fire.
 4. A shared full-tree reconciler owns frame markers, settings-toolbar/chip reparenting, preview-fullscreen toggle, sheet-rise replay, and stats-line marking. The DOM-free engine (`createReconcilerCore` in `src/client/effects/reconciler-core.ts`, zero imports) owns the task registry, dirty-key routing, and coalesced flush scheduling; `src/client/effects/phone-chrome.ts` is the thin browser adapter (`installReconciler` + `addReconcilerTask`) that feeds it MutationObserver records (`attributeName`, or `'*'` for tree changes) and drives its lifecycle from the mobile effect. Tasks declare optional `scopes` (the dirty keys they react to) so attribute-only flushes wake only the relevant tasks; `stats-line` must stay `['*']` because TPS updates are childList text mutations. Tasks run only while the mobile breakpoint is active, coalesced to one pass per animation frame. `installFrameController` / `installReconciler` / `registerReconcileTasks` each return a disposer collected in one `ctx.effect` in `apply`, so a same-environment plugin reload rebuilds the reconciler from scratch.
 5. `src/client/effects/` handles phone chrome, dsh-web-ui compatibility, statistics-row marking, and the optional debug badge. DOM integrations use observers and idempotent reconciliation because third-party React renders can replace injected nodes.
 6. `src/client/styles/index.ts` concatenates CSS modules in the load-bearing order `base → layout → compat → misc`; the client injects the result as one `<style data-plugin>` tag. Mobile rules target `(max-width: 1023px)`; desktop rules hide mobile controls and preserve the uninstalled layout.
@@ -22,7 +23,7 @@ Third-party compatibility is implemented through scoped DOM markers, `MutationOb
 ## Key Directories
 
 - `src/`: TypeScript source. `src/index.ts` is the host half; `src/client/` is the browser half.
-- `src/client/effects/`: lifecycle-managed DOM effects grouped by domain (`phone-chrome`, `aionui-compat`, `stats-line`).
+- `src/client/effects/`: lifecycle-managed DOM effects grouped by domain (`phone-chrome`, `aionui-compat`, `stats-line`, `haptic`/`haptic-pref`).
 - `src/client/styles/`: CSS-as-TypeScript string modules (`base.css.ts`, `layout.css.ts`, `compat.css.ts`, `misc.css.ts`) plus the concatenation entry point.
 - `scripts/`: build wrapper and the standalone `cdp-probe.mjs` browser smoke probe.
 - `lib/`: committed TypeScript declarations and generated host/client artifacts. Treat it as build output; do not hand-edit it.
@@ -80,8 +81,9 @@ The config dump should contain the `dsh-mobile-nav` row. There is no package `de
 - `tsconfig.client.json`: strict client/CommonJS compilation to `.client-build/`, declaration output, path mappings, and import-extension rewriting.
 - `cordis.patch.yml`: the single host plugin row.
 - `src/client/index.tsx`: client composition, fiber injection, effect installation, locale registration, and slot registration.
-- `src/client/MobileNavToggle.tsx` / `MobileDrawerFooter.tsx`: header and drawer actions.
-- `src/client/effects/*.ts`: phone chrome, third-party compatibility, statistics, and diagnostics.
+- `src/client/MobileNavToggle.tsx` / `MobileDrawerFooter.tsx` / `HapticRow.tsx`: header and drawer actions, and the settings haptic row (`role="switch"` pill, no official Switch primitive, styles self-drawn).
+- `src/client/effects/*.ts`: phone chrome, third-party compatibility, statistics, haptics, and diagnostics.
+- `src/client/effects/haptic-pref.ts`: haptic preference module — localStorage keys `dsh-mobile-nav.haptic.enabled` (default on) / `dsh-mobile-nav.haptic.intensity` (default light), same-tab `CustomEvent`, cross-tab `storage` event; referenced only by `effects/haptic.ts` and `HapticRow.tsx`. Intensity→duration (`INTENSITY_MS`: light 8 / medium 15 / heavy 30ms) lives in `effects/haptic.ts`, read at each tap so changes apply without re-mounting listeners.
 - `src/client/debug.ts`: opt-in `?mobile-nav-debug=1` runtime diagnostics and error capture.
 - `src/client/styles/index.ts` and `src/client/styles/*.css.ts`: mobile stylesheet source and ordering.
 - `scripts/build-client.mjs`: recursive client-module collector and `window.__ModuleLoader__.load` wrapper.
