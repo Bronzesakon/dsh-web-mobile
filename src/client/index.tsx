@@ -3,7 +3,7 @@ import { MobileNavToggle } from './MobileNavToggle.tsx'
 import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
 import { installDebugBadge } from './debug.ts'
-import { installFrameController, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
+import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
 import { NS, en, zh } from './locales.ts'
 import type { MobileNavKey } from './locales.ts'
@@ -55,6 +55,9 @@ export function apply(ctx: ClientContext): void {
 
   // Diagnostic overlay for phone-side repros (?mobile-nav-debug=1).
   installDebugBadge(ctx)
+
+  // Drawer close interactions: Escape and navigation taps inside the drawer.
+  installOverlayInteractions(ctx)
 
   installPhoneChrome(ctx)
 

@@ -145,6 +145,7 @@ export function installReconciler(ctx: ClientContext): () => void {
         'style',
         'class',
         'data-phase',
+        'data-sidebar-collapsed',
         'data-aionui-explorer-open',
         'data-aionui-preview-open',
         'data-mobile-preview-full',
@@ -334,6 +335,116 @@ function createSettingsToolbarTask(): ReconcilerTask {
 }
 
 /**
+ * Overlay elements: the dimmed backdrop (closes the drawer on tap) and the
+ * floating directory button for hero/blank phases with no session header.
+ * Both are plain DOM nodes reconciled against the frame's collapsed marker
+ * (the shell sets `data-sidebar-collapsed` when the drawer is closed). The
+ * removed MobileNavOverlay React component used to render these; they live
+ * here now, owned by the shared reconciler.
+ */
+export function createOverlayTask(
+  t: TranslateNS<typeof NS>,
+  toggleSidebar: () => void,
+): ReconcilerTask {
+  let backdrop: HTMLDivElement | null = null
+  let fab: HTMLButtonElement | null = null
+  const drawerOpen = (): boolean => {
+    const frame = getFrame()
+    return frame !== null && !frame.hasAttribute('data-sidebar-collapsed')
+  }
+  const heroPhase = (): boolean =>
+    document.querySelector('[data-phase="active"]') === null
+  return {
+    name: 'overlay-backdrop-fab',
+    ensure: () => {
+      const frame = getFrame()
+      if (frame === null) return
+      // Backdrop: present while the drawer is open; its tap closes it.
+      if (drawerOpen() && backdrop === null) {
+        backdrop = document.createElement('div')
+        backdrop.dataset.mobileNav = 'backdrop'
+        backdrop.setAttribute('role', 'button')
+        backdrop.setAttribute('aria-label', t('backdrop'))
+        backdrop.addEventListener('click', toggleSidebar)
+        frame.appendChild(backdrop)
+      } else if (!drawerOpen() && backdrop !== null) {
+        backdrop.remove()
+        backdrop = null
+      }
+      // FAB: fallback for phases without a session header, drawer closed.
+      if (heroPhase() && !drawerOpen() && fab === null) {
+        fab = document.createElement('button')
+        fab.type = 'button'
+        fab.dataset.mobileNav = 'fab'
+        fab.setAttribute('aria-label', t('open'))
+        fab.title = t('open')
+        fab.innerHTML =
+          '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="18" height="18">' +
+          '<path fill-rule="evenodd" clip-rule="evenodd" d="M9.67272 0.522841C10.8339 0.522841 11.76 0.522714 12.4963 0.602493C13.2453 0.683657 13.8789 0.854248 14.4264 1.25197C14.7504 1.48739 15.0355 1.77247 15.2709 2.0965C15.6686 2.64394 15.8392 3.27758 15.9204 4.02655C16.0002 4.7629 16 5.68895 16 6.85014V9.14986C16 10.3111 16.0002 11.2371 15.9204 11.9735C15.8392 12.7224 15.6686 13.3561 15.2709 13.9035C15.0355 14.2275 14.7504 14.5126 14.4264 14.748C13.8789 15.1458 13.2453 15.3163 12.4963 15.3975C11.76 15.4773 10.8339 15.4772 9.67272 15.4772H6.3273C5.16611 15.4772 4.24006 15.4773 3.50371 15.3975C2.75474 15.3163 2.1211 15.1458 1.57366 14.748C1.24963 14.5126 0.964549 14.2275 0.729131 13.9035C0.331407 13.3561 0.160817 12.7224 0.0796529 11.9735C-0.000126137 11.2371 1.25338e-09 10.3111 1.25338e-09 9.14986V6.85014C1.25329e-09 5.68895 -0.000126137 4.7629 0.0796529 4.02655C0.160817 3.27758 0.331407 2.64394 0.729131 2.0965C0.964549 1.77247 1.24963 1.48739 1.57366 1.25197C2.1211 0.854248 2.75474 0.683657 3.50371 0.602493C4.24006 0.522714 5.16611 0.522841 6.3273 0.522841H9.67272ZM5.54303 1.88715V14.1118C5.78636 14.1128 6.04709 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14986V6.85014C14.6398 5.65896 14.6393 4.81967 14.5693 4.1736C14.5007 3.54048 14.3723 3.17318 14.1711 2.89609C14.0195 2.68747 13.8354 2.50337 13.6268 2.35179C13.3497 2.1506 12.9824 2.02212 12.3493 1.95353C11.7032 1.88358 10.8639 1.88307 9.67272 1.88307H6.3273C6.04709 1.88307 5.78636 1.8862 5.54303 1.88715ZM4.1828 1.91166C3.99125 1.9216 3.8148 1.93577 3.65076 1.95353C3.01764 2.02212 2.65034 2.1506 2.37325 2.35179C2.16463 2.50337 1.98052 2.68747 1.82895 2.89609C1.62776 3.17318 1.49928 3.54048 1.43069 4.1736C1.36074 4.81967 1.36023 5.65896 1.36023 6.85014V9.14986C1.36023 10.341 1.36074 11.1803 1.43069 11.8264C1.49928 12.4595 1.62776 12.8268 1.82895 13.1039C1.98052 13.3125 2.16463 13.4966 2.37325 13.6482C2.65034 13.8494 3.01764 13.9779 3.65076 14.0465C3.8148 14.0642 3.99125 14.0784 4.1828 14.0883V1.91166Z" fill="currentColor"/>' +
+          '</svg>'
+        fab.addEventListener('click', toggleSidebar)
+        frame.appendChild(fab)
+      } else if ((!heroPhase() || drawerOpen()) && fab !== null) {
+        fab.remove()
+        fab = null
+      }
+    },
+    dispose: () => {
+      backdrop?.remove()
+      backdrop = null
+      fab?.remove()
+      fab = null
+    },
+  }
+}
+
+/**
+ * Drawer close interactions that are plain event listeners, not DOM
+ * reconciliation:
+ * - Escape closes the drawer (yielding to any open modal dialog, which owns
+ *   its own Escape handling).
+ * - Tapping a navigation target inside the drawer (session row, task board /
+ *   ssh takeover entries, search results) closes the drawer so the content
+ *   it opened gets the whole screen. Session-row action buttons (kebab) are
+ *   excluded — they open a menu that must survive the tap.
+ */
+export function installOverlayInteractions(ctx: ClientContext): void {
+  installMobileEffect(ctx, 'dsh-mobile-nav: drawer close (Escape + navigate)', () => {
+    const toggleSidebar = (): void => ctx.layout.toggleSidebar()
+    const drawerOpen = (): boolean => {
+      const frame = getFrame()
+      return frame !== null && !frame.hasAttribute('data-sidebar-collapsed')
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+      if (document.querySelector('[aria-modal="true"]') !== null) return
+      if (drawerOpen()) toggleSidebar()
+    }
+    // Capture phase: run before the shell or a plugin processes the click,
+    // so takeover panels never render under the open drawer.
+    const onDrawerClick = (event: MouseEvent): void => {
+      if (document.querySelector('[aria-modal="true"]') !== null) return
+      if (!drawerOpen()) return
+      const target = event.target as HTMLElement | null
+      if (target === null) return
+      const drawer = document.querySelector<HTMLElement>('[data-mobile-nav="frame"] > :first-child')
+      if (drawer === null || !drawer.contains(target)) return
+      if (target.closest('[class*="sessionRow"] button') !== null) return
+      const navigates = target.closest(
+        'button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry], [class*="newSession"], [class*="sessionRow"], [class*="searchResultRow"], [class*="searchResultWorkspace"]',
+      )
+      if (navigates !== null) toggleSidebar()
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('click', onDrawerClick, true)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('click', onDrawerClick, true)
+    }
+  })
+}
+
+/**
  * Register the shared DOM reconciler tasks that used to each own a full-tree
  * MutationObserver. The React FAB task is registered separately from the
  * overlay component because it drives React state. Returns a disposer that
@@ -351,6 +462,7 @@ export function registerReconcileTasks(ctx: ClientContext): () => void {
     addReconcilerTask(createPreviewCloseTask()),
     addReconcilerTask(createSheetRiseTask()),
     addReconcilerTask(createStatsLineTask()),
+    addReconcilerTask(createOverlayTask(t, () => ctx.layout.toggleSidebar())),
   ]
   return () => {
     for (const remove of removeTasks) remove()
