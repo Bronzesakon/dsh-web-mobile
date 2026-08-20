@@ -1,5 +1,6 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots';
+import type { ReconcilerTask } from './reconciler-core.ts';
 declare const NS = "mobileNav";
 /** Same breakpoint as the shell's SIDEBAR_AUTO_COLLAPSE (viewport < 1024). */
 export declare const MOBILE_QUERY = "(max-width: 1023px)";
@@ -23,14 +24,13 @@ export declare function getFrame(): HTMLElement | null;
  * same-environment plugin reload can rebuild the reconciler from scratch.
  */
 export declare function installFrameController(): () => void;
-/** One unit of DOM reconciliation driven by the shared full-tree observer. */
-export interface ReconcilerTask {
-    readonly name: string;
-    /** Called once on activation and after every observed DOM mutation. */
-    ensure(): void;
-    /** Called on deactivation, disposal, or explicit removal. */
-    dispose(): void;
-}
+/**
+ * One unit of DOM reconciliation driven by the shared full-tree observer.
+ * Defined in the DOM-free core so registration / dirty routing / coalescing
+ * are unit-testable; kept reachable from here so the third-party task modules
+ * (aionui-compat, stats-line) keep importing it via `./phone-chrome.ts`.
+ */
+export type { ReconcilerTask } from './reconciler-core.ts';
 /**
  * One full-tree MutationObserver for every mobile DOM reconciler. Tasks can be
  * registered from React or plain effects; they only run while the mobile
@@ -85,5 +85,4 @@ export declare function installOverlayInteractions(ctx: ClientContext): void;
  * reload can rebuild the reconciler from scratch.
  */
 export declare function registerReconcileTasks(ctx: ClientContext): () => void;
-export {};
 //# sourceMappingURL=phone-chrome.d.ts.map
