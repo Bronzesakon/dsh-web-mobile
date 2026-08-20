@@ -54,8 +54,15 @@ export function createStatsLineTask(): ReconcilerTask {
       return
     }
   }
+  // Scope decision: the TPS readout updates are childList/characterData text
+  // mutations inside the composer stack, so this task can only wake on the
+  // tree key. A subtree-scoped observer would need one observer per
+  // container, which the single full-tree observer design intentionally
+  // avoids; the expensive composer-stack scan stays the cost of re-anchoring
+  // markers that React rebuilds every token.
   return {
     name: 'stats-line',
+    scopes: ['*'],
     ensure: mark,
     dispose: () => {
       // Hand the official layout back: return the TPS readout to its own

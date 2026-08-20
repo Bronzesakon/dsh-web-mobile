@@ -45,6 +45,9 @@ export function installAionuiCompat(ctx: ClientContext): void {
 export function createPreviewCloseTask(): ReconcilerTask {
   return {
     name: 'preview-close-sync',
+    // Only acts when the suite hides the col via inline style (or when our
+    // own preview markers flip); no tree dependency, so no '*'.
+    scopes: ['style', 'data-aionui-preview-open', 'data-mobile-preview-full'],
     ensure: () => {
       const pv = document.querySelector<HTMLElement>('[data-aionui-preview-col]')
       if (pv === null) return
@@ -71,6 +74,16 @@ export function createSheetRiseTask(): ReconcilerTask {
   }
   return {
     name: 'sheet-rise-replay',
+    // The flush runs on the next frame, by which time React has rendered the
+    // opened col, so the frame markers / inline style / class changes are
+    // reliable triggers — no '*'.
+    scopes: [
+      'style',
+      'class',
+      'data-aionui-explorer-open',
+      'data-aionui-preview-open',
+      'data-mobile-preview-full',
+    ],
     ensure: () => {
       for (const sel of cols) {
         const el = document.querySelector(sel)

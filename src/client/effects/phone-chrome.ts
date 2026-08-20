@@ -64,6 +64,7 @@ export function installFrameController(): () => void {
   let frame: HTMLElement | null = null
   const removeTask = addReconcilerTask({
     name: 'frame-marker',
+    scopes: ['*'],
     ensure: () => {
       frame = findFrame()
       if (frame !== null && !frame.hasAttribute('data-mobile-nav')) {
@@ -232,6 +233,9 @@ function createPreviewFullscreenTask(t: TranslateNS<typeof NS>): ReconcilerTask 
   }
   return {
     name: 'preview-fullscreen-toggle',
+    // The flush runs on the next frame, by which time React has rendered the
+    // preview col, so the open marker alone is a reliable trigger — no '*'.
+    scopes: ['data-aionui-preview-open', 'data-mobile-preview-full'],
     ensure: () => {
       const col = document.querySelector('[data-aionui-preview-col]')
       if (col === null) return
@@ -262,6 +266,7 @@ function createPreviewFullscreenTask(t: TranslateNS<typeof NS>): ReconcilerTask 
 function createGitChipTask(): ReconcilerTask {
   return {
     name: 'git-chip-reparent',
+    scopes: ['*'],
     ensure: () => {
       const chip = document.querySelector('[data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor]')
       if (chip === null) return
@@ -281,6 +286,7 @@ function createSettingsToolbarTask(): ReconcilerTask {
   let origin: { parent: Node; next: Node | null } | null = null
   return {
     name: 'settings-toolbar-reparent',
+    scopes: ['*'],
     ensure: () => {
       const dialog = document.querySelector('[aria-modal="true"]')
       if (dialog === null) return
@@ -329,6 +335,10 @@ export function createOverlayTask(
     document.querySelector('[data-phase="active"]') === null
   return {
     name: 'overlay-backdrop-fab',
+    // '*' stays: the frame can render after activation (the shell mounts it
+    // with data-sidebar-collapsed already set), and the FAB must appear on
+    // the hero phase even when no drawer attribute ever changes again.
+    scopes: ['*', 'data-sidebar-collapsed', 'data-phase'],
     ensure: () => {
       const frame = getFrame()
       if (frame === null) return
