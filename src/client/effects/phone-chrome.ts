@@ -1,5 +1,7 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import { createReconcilerCore } from './reconciler-core.ts'
+import type { ReconcilerTask } from './reconciler-core.ts'
 import { createPreviewCloseTask, createSheetRiseTask } from './aionui-compat.ts'
 import { createStatsLineTask } from './stats-line.ts'
 
@@ -84,36 +86,34 @@ export function installFrameController(): () => void {
   }
 }
 
-/** One unit of DOM reconciliation driven by the shared full-tree observer. */
-export interface ReconcilerTask {
-  readonly name: string
-  /** Called once on activation and after every observed DOM mutation. */
-  ensure(): void
-  /** Called on deactivation, disposal, or explicit removal. */
-  dispose(): void
-}
+/**
+ * One unit of DOM reconciliation driven by the shared full-tree observer.
+ * Defined in the DOM-free core so registration / dirty routing / coalescing
+ * are unit-testable; kept reachable from here so the third-party task modules
+ * (aionui-compat, stats-line) keep importing it via `./phone-chrome.ts`.
+ */
+export type { ReconcilerTask } from './reconciler-core.ts'
 
-const registered = new Set<ReconcilerTask>()
 let frameControllerInstalled = false
 let reconcileTasksRegistered = false
 let reconcilerInstalled = false
 
-interface ActiveReconciler {
-  tasks: Set<ReconcilerTask>
-  observer: MutationObserver
-}
-
-let active: ActiveReconciler | null = null
-
-function runTasks(tasks: Set<ReconcilerTask>): void {
-  for (const task of tasks) {
-    try {
-      task.ensure()
-    } catch (error) {
-      console.error(`[dsh-mobile-nav] reconciler task ${task.name} failed`, error)
+// The DOM-free core owns the task registry, dirty-key routing, and coalesced
+// flush scheduling; this module is the thin browser adapter that feeds it
+// MutationObserver records and drives its lifecycle from the mobile effect.
+const core = createReconcilerCore({
+  requestFrame: (flush) => {
+    let id = 0
+    const run = (): void => {
+      id = 0
+      flush()
     }
-  }
-}
+    id = requestAnimationFrame(run)
+    return () => {
+      if (id !== 0) cancelAnimationFrame(id)
+    }
+  },
+})
 
 /**
  * One full-tree MutationObserver for every mobile DOM reconciler. Tasks can be
@@ -124,19 +124,20 @@ export function installReconciler(ctx: ClientContext): () => void {
   if (reconcilerInstalled) return () => {}
   reconcilerInstalled = true
   installMobileEffect(ctx, 'dsh-mobile-nav: DOM reconciler', () => {
-    const tasks = new Set(registered)
     // Coalesce every mutation burst (typing, animations, per-token TPS
-    // re-renders) into one full-tree pass per animation frame instead of
-    // running every task synchronously per mutation.
-    let raf = 0
-    const schedule = (): void => {
-      if (raf !== 0) return
-      raf = requestAnimationFrame(() => {
-        raf = 0
-        runTasks(tasks)
-      })
-    }
-    const observer = new MutationObserver(schedule)
+    // re-renders) into one dirty-key pass per animation frame instead of
+    // running every task synchronously per mutation. Until every task
+    // declares scopes, all of them stay unscoped and run on every flush —
+    // behavior is identical to the previous full pass.
+    const observer = new MutationObserver((records) => {
+      const keys = new Set<string>()
+      for (const record of records) {
+        keys.add(
+          record.type === 'attributes' && record.attributeName !== null ? record.attributeName : '*',
+        )
+      }
+      core.note(keys)
+    })
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -151,19 +152,10 @@ export function installReconciler(ctx: ClientContext): () => void {
         'data-mobile-preview-full',
       ],
     })
-    active = { tasks, observer }
-    runTasks(tasks)
+    core.activate()
     return () => {
-      if (raf !== 0) cancelAnimationFrame(raf)
       observer.disconnect()
-      for (const task of tasks) {
-        try {
-          task.dispose()
-        } catch (error) {
-          console.error(`[dsh-mobile-nav] reconciler task ${task.name} dispose failed`, error)
-        }
-      }
-      active = null
+      core.deactivate()
     }
   })
   return () => {
@@ -173,26 +165,7 @@ export function installReconciler(ctx: ClientContext): () => void {
 
 /** Register a reconciler task. The returned disposer removes it immediately. */
 export function addReconcilerTask(task: ReconcilerTask): () => void {
-  registered.add(task)
-  if (active !== null) {
-    active.tasks.add(task)
-    try {
-      task.ensure()
-    } catch (error) {
-      console.error(`[dsh-mobile-nav] reconciler task ${task.name} failed`, error)
-    }
-  }
-  return () => {
-    registered.delete(task)
-    if (active !== null) {
-      active.tasks.delete(task)
-      try {
-        task.dispose()
-      } catch (error) {
-        console.error(`[dsh-mobile-nav] reconciler task ${task.name} dispose failed`, error)
-      }
-    }
-  }
+  return core.register(task)
 }
 
 /**
