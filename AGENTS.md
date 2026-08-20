@@ -10,7 +10,7 @@ Names differ by boundary: the README/GitHub project is `dsh-web-mobile`, the npm
 
 1. `cordis.patch.yml` inserts the `dsh-mobile-nav` host row. `src/index.ts` intentionally exports an empty `apply()` so the plugin is visible to the host Loader.
 2. `package.json` exposes `./client` and declares `dsh.client.platform: "web"`; DSH discovers the browser half from `src/client/index.tsx`.
-3. The client fiber injects `slots`, `layout`, `locale`, and `sessionLogDownload`. Its `apply(ctx)` registers locale dictionaries, injects one stylesheet, installs diagnostics/effects, and registers two slots:
+3. The client fiber injects `slots`, `layout`, `locale`, and `sessionLogDownload`. Its `apply(ctx)` registers locale dictionaries, injects one stylesheet, installs diagnostics/effects, and registers three slots:
    - `conversation.session.header.actions` → `MobileNavToggle` (`order: 10`): drawer and Files controls.
    - `sidebar.footer.action` → `MobileDrawerFooter` (`order: 5`): Files and session-log actions. The order keeps these below the remote icon row and above usage badges.
    - `settings.general.item` → `HapticRow` (`order: 30`): tap-haptic pill switch with intensity selector, stacked after the official rows (permission -20 / language 0 / appearance 10 / composer-enter 20). The stylesheet hides the row on desktop, where vibration can never fire.
@@ -23,7 +23,7 @@ Third-party compatibility is implemented through scoped DOM markers, `MutationOb
 ## Key Directories
 
 - `src/`: TypeScript source. `src/index.ts` is the host half; `src/client/` is the browser half.
-- `src/client/effects/`: lifecycle-managed DOM effects grouped by domain (`phone-chrome`, `aionui-compat`, `stats-line`, `haptic`/`haptic-pref`).
+- `src/client/effects/`: lifecycle-managed DOM effects grouped by domain (`phone-chrome`, `aionui-compat`, `stats-line`, `haptic`/`haptic-pref`, `reconciler-core`).
 - `src/client/styles/`: CSS-as-TypeScript string modules (`base.css.ts`, `layout.css.ts`, `compat.css.ts`, `misc.css.ts`) plus the concatenation entry point.
 - `scripts/`: build wrapper and the standalone `cdp-probe.mjs` browser smoke probe.
 - `lib/`: committed TypeScript declarations and generated host/client artifacts. Treat it as build output; do not hand-edit it.

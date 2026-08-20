@@ -11,3 +11,4 @@ playwright.config.ts
 test/
 test-results/
 playwright-report/
+.dsh-vision-toolkit/
