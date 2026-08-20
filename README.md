@@ -2,7 +2,7 @@
 
 尽可能的使 dsh 适配竖屏等移动端设备
 
-[![Release v1.0.0](https://img.shields.io/badge/release-v1.0.0-5B4CF0?style=flat-square)](package.json)
+[![Release v1.5.0](https://img.shields.io/badge/release-v1.5.0-5B4CF0?style=flat-square)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0B7285?style=flat-square)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Web%20Profile-5B4CF0?style=flat-square)](cordis.patch.yml)
 
@@ -24,6 +24,23 @@
 - **会话行操作菜单**:长按/右键会话行出现三点按钮(重命名 / Fork / 归档),弹出时抽屉保持打开;
 - **平板适配**:768–1023px 下弹窗与浮层限宽居中;桌面端(≥1024px)完全 no-op;
 - **诊断**:访问 `?mobile-nav-debug=1` 显示悬浮诊断条(视口 / 浮层状态 / JS 错误),手机端问题取证用。
+
+## 更新日志
+
+### v1.5.0
+
+**修复**
+
+- 抽屉关闭交互回归:移除旧 MobileNavOverlay 组件时误删的背板点击关闭、Escape 关闭、抽屉内导航点击收起、hero/blank 阶段悬浮按钮四项交互全部恢复;
+- preview/explorer 互斥对称:打开 explorer 前先清 preview 标记,收起/关闭路径对称,预览浮层不再误开或残留标记;
+- dispose 还原完整:设置工具栏、统计条、aionui sheet 标记在退出移动端布局时回到官方位置,桌面端无残留;
+- 预览全屏按钮 aria-label 同步真实动作(「全屏预览」/「退出全屏」)。
+
+**内部**
+
+- reconciler 热路径优化:抽出零依赖 DOM-free 引擎 `reconciler-core`(node:test 5 例覆盖生命周期 / 脏路由 / 合并 / 错误隔离),MutationObserver 按脏键路由,8 个任务赋 scopes,流式 flush 从 8/8 降至 5/8;
+- CSS 模块自包含、effect 分层清理;
+- CDP 回归门禁 `smoke:cdp`:覆盖抽屉 / 桌面 no-op / gitgraph 集成。
 
 ## 兼容插件
 
@@ -57,10 +74,6 @@ pnpm build
 - 移动端(390px):抽屉开合 / 遮罩 / Escape、设置弹窗适配、会话行三点菜单弹出时抽屉保持、文件/预览浮层;
 - 桌面端(≥1024px):与未安装时一致;
 - 回归门禁:`DSH_PROBE_SESSION_ID=... pnpm smoke:cdp`(需先启动目标 profile,连接默认 `http://127.0.0.1:3080/`)。
-
-## 兼容性
-
-需要 `:has()`(Chromium 105+);`prefers-reduced-motion: reduce` 下自动禁用动画。
 
 ## License
 
