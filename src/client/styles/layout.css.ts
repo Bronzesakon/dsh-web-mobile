@@ -166,6 +166,8 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
      trailing lane. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) {
     box-sizing: border-box !important;
+    container-type: inline-size !important;
+    container-name: dsh-mobile-composer !important;
     flex-wrap: nowrap !important;
     gap: 6px !important;
     padding-left: 6px !important;
@@ -178,19 +180,21 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     gap: 6px !important;
     overflow: hidden !important;
   }
-  /* PermissionSelect / plan controls live in the modes lane. The icon and
-     chevron remain visible while the label yields first. */
+  /* PermissionSelect / plan controls share the tools lane. Let the
+     permission label use the remaining tools width, while the lower-priority
+     plan slot keeps an icon-sized target instead of stealing model width. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) {
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    max-width: min(31vw, 120px) !important;
+    max-width: none !important;
     gap: 4px !important;
     overflow: hidden !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] {
     flex: 1 1 auto !important;
-    min-width: 0 !important;
+    min-width: 28px !important;
     max-width: 100% !important;
+    display: flex !important;
     overflow: hidden !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] > [class$="_triggerLabel"] {
@@ -200,11 +204,32 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) {
+    flex: 0 0 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    overflow: hidden !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) > [class$="_trigger"] {
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    display: flex !important;
+    overflow: hidden !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) [class$="_triggerLabel"] {
+    display: none !important;
+  }
   [data-phase] [class*="_card"]:has(textarea) [class$="_trailing"] {
     flex: 1 1 auto !important;
     gap: 6px !important;
     min-width: 0 !important;
     overflow: hidden !important;
+  }
+  @container dsh-mobile-composer (max-width: 359px) {
+    [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] > [class$="_triggerLabel"] {
+      display: none !important;
+    }
   }
   /* Let the model selector consume only the remaining width; ContextMeter and
      the 34px send target stay fixed. */
