@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createReconcilerCore } from '../src/client/effects/reconciler-core.ts'
 import type { FrameRequest, ReconcilerCore, ReconcilerTask } from '../src/client/effects/reconciler-core.ts'
+import { createPreviewCloseTask } from '../src/client/effects/aionui-compat.ts'
 
 interface Harness {
   core: ReconcilerCore
@@ -202,4 +203,41 @@ test('flush semantics: empty dirty runs nothing; activation forces all; deactiva
   h.flushFrame()
   assert.equal(x.ensures, 1, 'cancelled frame must not flush')
   assert.equal(x.disposes, 1)
+})
+
+test('preview-close-sync: own open marker must not be treated as a suite close', () => {
+  const frameAttrs = new Set(['data-aionui-preview-open'])
+  const frame = {
+    hasAttribute: (name: string) => frameAttrs.has(name),
+    removeAttribute: (name: string) => {
+      frameAttrs.delete(name)
+    },
+  }
+  const preview = { style: { visibility: 'hidden' } }
+  const originalDocument = (globalThis as { document?: unknown }).document
+  ;(globalThis as { document?: unknown }).document = {
+    querySelector: (selector: string) => {
+      if (selector === '[data-mobile-nav="frame"]') return frame
+      if (selector === '[data-aionui-preview-col]') return preview
+      return null
+    },
+  }
+  const h = makeHarness()
+  h.core.register(createPreviewCloseTask())
+  h.core.activate()
+  // Activation already ran ensure once; re-add the marker to simulate a
+  // fresh file-row tap before dirtying the open marker itself.
+  frameAttrs.add('data-aionui-preview-open')
+  h.core.note(['data-aionui-preview-open'])
+  h.flushFrame()
+  assert.equal(
+    frameAttrs.has('data-aionui-preview-open'),
+    true,
+    'setting our own open marker must not immediately close the preview',
+  )
+  // A real suite hide via inline style must still clear the marker.
+  h.core.note(['style'])
+  h.flushFrame()
+  assert.equal(frameAttrs.has('data-aionui-preview-open'), false, 'inline style hidden must close the preview')
+  ;(globalThis as { document?: unknown }).document = originalDocument
 })
