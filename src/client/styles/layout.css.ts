@@ -229,12 +229,6 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     max-width: max-content !important;
     overflow: visible !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_wrap"] {
-    flex: 0 1 auto !important;
-    min-width: 34px !important;
-    max-width: max-content !important;
-    overflow: visible !important;
-  }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_wrap"] > [class$="_chip"] {
     max-width: 100% !important;
     overflow: hidden !important;
@@ -401,14 +395,6 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     order: 3 !important;
     flex: 0 0 28px !important;
     width: 28px !important;
-  }
-  @media (max-width: 479px) {
-    [data-phase] header [class$="_headerActions"] {
-      gap: 2px !important;
-    }
-    [data-phase] header [class$="_label"]:has(> svg) {
-      max-width: min(22vw, 220px) !important;
-    }
   }
   /* Session log download: gone from the header row on mobile (the utilities
      seat holds only the session-log-export capsule). */

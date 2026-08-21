@@ -132,14 +132,4 @@ export const BASE_CSS = `
   }
 }
 
-/* General-settings row: pill switch for the tap vibration plus an intensity
-   selector. Rendered at any width like the other base widgets; the desktop
-   block in misc hides the row at ≥1024px, where the vibration can never
-   fire. Column layout — title + plugin attribution on top, then a controls
-   row with the switch and the selector side by side — so the long title
-   never squeezes the controls on a narrow phone. Theme tokens only, so the
-   track reads correctly in both light and dark themes. */
-/* Intensity selector: the official LanguageRow option pill (module-platform
-   background + chevron), scaled down to sit beside the 24px switch. Disabled
-   and grayed while the switch is off. */
 `
