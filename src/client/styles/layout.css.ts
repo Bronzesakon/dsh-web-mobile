@@ -181,7 +181,10 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     flex: 0 1 auto !important;
     min-width: 0 !important;
     gap: 6px !important;
-    overflow: hidden !important;
+    /* The permission dropdown (Menu, side: top) pops upward from inside the
+       tools lane; overflow hidden here would crop it, same as the row. Text
+       ellipsis is handled by the trigger label itself. */
+    overflow: visible !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > [class$="_trailing"] {
     flex: 1 1 auto !important;
@@ -197,7 +200,9 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     min-width: 0 !important;
     max-width: none !important;
     gap: 4px !important;
-    overflow: hidden !important;
+    /* The permission Menu list (side: top) pops upward out of this lane;
+       overflow hidden crops it. The trigger label clips its own text. */
+    overflow: visible !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] {
     flex: 1 1 auto !important;
