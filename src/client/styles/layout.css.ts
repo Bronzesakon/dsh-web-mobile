@@ -158,68 +158,80 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   }
 
   /* --- Composer bottom row on mobile ---
-     The official row gives the model pill (trailing) flex:0 0 auto, which
-     squeezes the agent-permission pill (modes) down to 15px: the pill's
-     chevron then overflows on top of the model name. Let the permission
-     pill keep its natural width and let the model pill shrink instead.
-     Anchored by the composer card (:has(textarea)): row = the _row class
-     containing a _trailing group, tools = its first child, permission pill
-     = its 2nd child, model pill = the _trailing group.
-     NOTE: do NOT anchor these by the card's :last-child — a client effect
-     moves the git-graph branch chip INTO the card, which becomes the card's
-     new last child and silently disables every :last-child rule (the model
-     pill then falls back to the official fixed layout and long model IDs
-     overflow instead of ellipsizing). Structural anchors only. */
-  /* Official composer row: a flex row with space-between and 12px group gaps.
-     On a phone the tools group and the trailing (model/context/send) group
-     don't fit side by side, so the model selector ends up on its own second
-     row / overflow. Force the row onto one line and tighten gaps to 8px so
-     the model pill gets every spare pixel. The trailing group is given
-     flex:1 1 auto and the model trigger/label below shrink and ellipsize,
-     so both groups share the row and the model stays with the send button. */
+     The official row contains two lanes: tools (plus + permission/mode
+     controls) and trailing (model + context + send). The previous rules made
+     the modes lane flex:none, so its full intrinsic width collided with the
+     model selector on narrow phones. Keep fixed hit targets fixed, but let
+     text-bearing controls shrink and ellipsize before they paint over the
+     trailing lane. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) {
+    box-sizing: border-box !important;
     flex-wrap: nowrap !important;
-    gap: 8px !important;
+    gap: 6px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    overflow: hidden !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child {
-    gap: 8px !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    gap: 6px !important;
+    overflow: hidden !important;
   }
+  /* PermissionSelect / plan controls live in the modes lane. The icon and
+     chevron remain visible while the label yields first. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) {
-    flex: 0 0 auto !important;
-    gap: 8px !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: min(31vw, 120px) !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] > [class$="_triggerLabel"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_trailing"] {
     flex: 1 1 auto !important;
-    gap: 8px !important;
+    gap: 6px !important;
     min-width: 0 !important;
+    overflow: hidden !important;
   }
-  /* Let the model selector take the free space in the trailing group so the
-     model name is not squeezed/truncated; the context meter stays fixed. */
+  /* Let the model selector consume only the remaining width; ContextMeter and
+     the 34px send target stay fixed. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    overflow: hidden !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] {
+    display: flex !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
-  /* The model label must absorb the trigger's free width: officially it is a
-     fixed-content flex item, so the spare width of a grown pill sits unused
-     between the chevron and the pill edge. Let the label grow and shrink:
-     the full model ID shows whenever the row can fit it, and the ellipsis
-     lands exactly at the available width otherwise. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] > [class$="_triggerLabel"] {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]:not([aria-haspopup="menu"])) {
+  [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]):not(:has(> [class$="_trigger"][aria-haspopup="menu"])) {
     flex: 0 0 auto !important;
   }
 
-  /* Model switcher menu: the official dropdown is right-aligned to the
-     trigger (right:0). The model pill sits near the center of the composer,
-     so on a phone the 240px menu overflows the left edge and looks off-center.
-     Center the menu on the trigger instead. */
+  /* Model switcher menu: center the dropdown on the now-shrinkable trigger. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]) > [class$="_menu"] {
     left: 50% !important;
     right: auto !important;
