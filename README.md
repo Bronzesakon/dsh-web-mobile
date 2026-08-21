@@ -1,7 +1,7 @@
 ![dsh-web-mobile — 手机上也能好好用 DSH](assets/banner.png)
 
 <p align="center">
-  <strong>移动端适配插件 dsh-web-mobile</strong> — 窄屏好用，宽屏不动
+  <strong>DSH Web UI 移动端适配：窄屏好用，宽屏适用</strong>
 </p>
 
 <p align="center">
