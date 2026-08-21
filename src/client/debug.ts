@@ -45,7 +45,17 @@ export function installDebugBadge(ctx: ClientContext): void {
     }
     const paint = (): void => { badge.textContent = read() }
     paint()
-    const observer = new MutationObserver(paint)
+    // Never re-enter on the badge's own textContent mutations: paint() writes
+    // into a body subtree, so a naive full-tree observer would feed its own
+    // output back into paint() forever and starve the page (observed as a hard
+    // freeze with ?mobile-nav-debug=1).
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.target === badge || badge.contains(record.target)) continue
+        paint()
+        return
+      }
+    })
     observer.observe(document.body, { childList: true, subtree: true, attributes: true })
     const timer = setInterval(paint, 1500)
     document.body.appendChild(badge)
