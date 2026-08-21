@@ -204,27 +204,27 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
+  /* Slot wrappers such as the live plan chip are not trigger elements. Do
+     not force them into an icon-sized box: their child button would overflow
+     that wrapper and paint over PermissionSelect. Keep the wrapper intrinsic;
+     the model lane below is the one that sacrifices width. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) {
-    flex: 0 0 28px !important;
-    min-width: 28px !important;
-    max-width: 28px !important;
-    overflow: hidden !important;
+    flex: 0 1 auto !important;
+    min-width: 34px !important;
+    max-width: max-content !important;
+    overflow: visible !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) > [class$="_trigger"] {
-    width: 28px !important;
-    min-width: 28px !important;
-    max-width: 28px !important;
-    display: flex !important;
-    overflow: hidden !important;
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_wrap"] {
+    flex: 0 1 auto !important;
+    min-width: 34px !important;
+    max-width: max-content !important;
+    overflow: visible !important;
   }
-  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > :not([class$="_trigger"]) [class$="_triggerLabel"] {
-    display: none !important;
-  }
-  [data-phase] [class*="_card"]:has(textarea) [class$="_trailing"] {
-    flex: 1 1 auto !important;
-    gap: 6px !important;
-    min-width: 0 !important;
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_wrap"] > [class$="_chip"] {
+    max-width: 100% !important;
     overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   @container dsh-mobile-composer (max-width: 359px) {
     [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child > :nth-child(2) > [class$="_trigger"] > [class$="_triggerLabel"] {
@@ -234,9 +234,15 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   /* Let the model selector consume only the remaining width; ContextMeter and
      the 34px send target stay fixed. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
-    flex: 1 1 auto !important;
+    flex: 0 1 auto !important;
     min-width: 0 !important;
+    max-width: min(34cqw, 136px) !important;
     overflow: hidden !important;
+  }
+  @container dsh-mobile-composer (max-width: 359px) {
+    [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
+      max-width: 30cqw !important;
+    }
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] {
     display: flex !important;
