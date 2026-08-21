@@ -552,10 +552,58 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   [data-mobile-nav="frame"] [class$="_card"]:has([data-gitgraph-chip-anchor]) {
     padding-top: 40px !important;
   }
-}
 
 /* 搜索框底部间距修复 */
 [aria-modal="true"] [class*="tabSearchRow"] {
   padding: 2px 4px 16px !important;
 }
+
+
+/* ===== 已安装列表：路径单行截断 ===== */
+[class*="irow"] > div > [class*="spec"] {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  font-size: 12px !important;
+}
+[class*="irow"] > div > [class*="nm"] {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+/* ===== 已安装列表：手机端纵向重排 ===== */
+@media (max-width: 1023px) {
+  [class*="irow"] {
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 4px 10px !important;
+  }
+  [class*="irow"] > div:first-child {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  [class*="irow"] > [class*="grow"] {
+    flex: 1 1 auto !important;
+  }
+  [class*="irow"] > button {
+    flex: 0 0 auto !important;
+  }
+  [class*="irow"] > button[class*="switch"] {
+    order: 3 !important;
+  }
+  [class*="irow"] > button:not([class*="switch"]) {
+    order: 2 !important;
+  }
+  [class*="irow"] > [class*="owner"] {
+    order: 1 !important;
+  }
+  [class*="irow"] > [class*="grow"] {
+    order: 0 !important;
+  }
+}
+}
+
 `

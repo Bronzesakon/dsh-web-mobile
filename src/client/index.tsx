@@ -33,10 +33,86 @@ export function apply(ctx: ClientContext): void {
     tag.dataset.pluginCss = '@dsh-external/dsh-mobile-nav/mobile.css'
     tag.textContent = MOBILE_CSS
     document.head.appendChild(tag)
+    // Keep this stylesheet last in <head> so its overrides win over the
+    // host UI's own styles (some host rules also use !important).
+    setTimeout(() => {
+      if (tag.isConnected) document.head.appendChild(tag)
+    }, 0)
     return () => {
       tag.remove()
     }
   }, 'dsh-mobile-nav: styles')
+
+  // Hard-fix the installed-plugins list text layout: the host market UI
+  // injects its own CSS after this plugin's stylesheet, so CSS overrides can
+  // be beaten. Inline !important styles win over every external rule.
+  ctx.effect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)')
+    const set = (el: HTMLElement, props: Record<string, string>): void => {
+      for (const [key, value] of Object.entries(props)) {
+        el.style.setProperty(key, value, 'important')
+      }
+    }
+    const apply = (): void => {
+      if (!mq.matches) return
+      document.querySelectorAll<HTMLElement>('[class*="irow"]').forEach((row) => {
+        set(row, {
+          'flex-wrap': 'wrap',
+          'align-items': 'center',
+          'gap': '4px 10px',
+        })
+        const first = row.children[0] as HTMLElement | undefined
+        if (first) {
+          set(first, {
+            'flex': '1 1 100%',
+            'max-width': '100%',
+            'min-width': '0',
+          })
+        }
+        row.querySelectorAll<HTMLElement>(':scope > button[class*="switch"]').forEach((el) => {
+          set(el, { 'order': '3' })
+        })
+        row.querySelectorAll<HTMLElement>(':scope > button:not([class*="switch"])').forEach((el) => {
+          set(el, { 'order': '2' })
+        })
+        row.querySelectorAll<HTMLElement>(':scope > [class*="owner"]').forEach((el) => {
+          set(el, { 'order': '1' })
+        })
+        row.querySelectorAll<HTMLElement>(':scope > [class*="grow"]').forEach((el) => {
+          set(el, { 'order': '0' })
+        })
+        const spec = row.querySelector<HTMLElement>('[class*="spec"]')
+        const nm = row.querySelector<HTMLElement>('[class*="nm"]')
+        if (spec) {
+          set(spec, {
+            'white-space': 'nowrap',
+            'overflow': 'hidden',
+            'text-overflow': 'ellipsis',
+            'max-width': '100%',
+          })
+        }
+        if (nm) {
+          set(nm, {
+            'white-space': 'nowrap',
+            'overflow': 'hidden',
+            'text-overflow': 'ellipsis',
+            'max-width': '100%',
+          })
+        }
+      })
+    }
+    apply()
+    const mo = new MutationObserver(apply)
+    mo.observe(document.documentElement, { childList: true, subtree: true })
+    const onMq = (): void => {
+      if (mq.matches) apply()
+    }
+    mq.addEventListener('change', onMq)
+    return () => {
+      mo.disconnect()
+      mq.removeEventListener('change', onMq)
+    }
+  }, 'dsh-mobile-nav: installed-list-inline-styles')
 
 
   // Shared mobile infrastructure: frame marker ownership and the single
