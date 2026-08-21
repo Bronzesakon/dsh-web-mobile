@@ -189,6 +189,7 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > [class$="_trailing"] {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    gap: 6px !important;
     /* Must not clip the model dropdown; the model trigger clips its own label. */
     overflow: visible !important;
   }
