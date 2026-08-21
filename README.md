@@ -1,16 +1,18 @@
-# dsh-web-mobile
-
 ![dsh-web-mobile — 手机上也能好好用 DSH](assets/banner.png)
 
-**移动端适配插件 dsh-web-mobile** — 窄屏好用，宽屏不动
+<p align="center">
+  <strong>移动端适配插件 dsh-web-mobile</strong> — 窄屏好用，宽屏不动
+</p>
 
-[![MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![dsh-plugin](https://img.shields.io/badge/topic-dsh--plugin-amber?style=flat-square)](https://github.com/topics/dsh-plugin)
-[![awesome · DSH plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/mexiaosqwq/dsh-web-mobile/)
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT" /></a>
+  <a href="https://github.com/topics/dsh-plugin"><img src="https://img.shields.io/badge/topic-dsh--plugin-amber?style=flat-square" alt="dsh-plugin" /></a>
+  <a href="https://awesome-dsh-plugin.com/p/mexiaosqwq/dsh-web-mobile/"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="awesome · DSH plugin" /></a>
+</p>
 
 ---
 
-**dsh-web-mobile**（npm 包 `@dsh-external/dsh-mobile-nav`）是 DeepSeek Harness Web UI 的移动端适配插件——让 DSH 在手机竖屏下也能好好用：
+**dsh-web-mobile** 是 DeepSeek Harness Web UI 的移动端适配插件——让 DSH 在手机竖屏下也能好好用：
 
 - **侧栏变抽屉**：手机竖屏下侧栏收进 overlay 抽屉，会话区全宽，点会话行自动收起
 - **弹窗变浮层**：设置、文件树、预览改成底部 sheet，触屏好点
