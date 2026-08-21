@@ -553,4 +553,9 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     padding-top: 40px !important;
   }
 }
+
+/* 搜索框底部间距修复 */
+[aria-modal="true"] [class*="tabSearchRow"] {
+  padding: 2px 4px 16px !important;
+}
 `
