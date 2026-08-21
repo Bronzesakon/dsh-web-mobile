@@ -172,13 +172,22 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     gap: 6px !important;
     padding-left: 6px !important;
     padding-right: 6px !important;
-    overflow: hidden !important;
+    /* The dropdown menu is absolutely positioned inside this row; any
+       overflow: hidden here would clip it. Inner lanes keep their own
+       overflow clipping, so the row itself can stay visible. */
+    overflow: visible !important;
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > :first-child {
     flex: 0 1 auto !important;
     min-width: 0 !important;
     gap: 6px !important;
     overflow: hidden !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea) [class$="_row"]:has([class$="_trailing"]) > [class$="_trailing"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    /* Must not clip the model dropdown; the model trigger clips its own label. */
+    overflow: visible !important;
   }
   /* PermissionSelect / plan controls share the tools lane. Let the
      permission label use the remaining tools width, while the lower-priority
@@ -231,17 +240,17 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
       display: none !important;
     }
   }
-  /* Let the model selector consume only the remaining width; ContextMeter and
-     the 34px send target stay fixed. */
+  /* Model selector: flexible and shrinkable, but never clipped.
+     The root must be overflow:visible so the dropdown menu can render.
+     The trigger itself clips the label text. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    max-width: min(34cqw, 136px) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   @container dsh-mobile-composer (max-width: 359px) {
     [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) {
-      max-width: 30cqw !important;
+      flex-basis: auto !important;
     }
   }
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"][aria-haspopup="menu"]) > [class$="_trigger"] {
@@ -262,11 +271,14 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     flex: 0 0 auto !important;
   }
 
-  /* Model switcher menu: center the dropdown on the now-shrinkable trigger. */
+  /* Model switcher menu: center the dropdown on the now-shrinkable trigger,
+     but never let it exceed the viewport on narrow phones. */
   [data-phase] [class*="_card"]:has(textarea) [class$="_root"]:has(> [class$="_trigger"]) > [class$="_menu"] {
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
+    max-width: min(320px, calc(100vw - 16px)) !important;
+    box-sizing: border-box !important;
   }
 
   /* --- Session header on mobile ---
