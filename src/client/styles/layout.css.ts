@@ -236,9 +236,10 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [data-phase] header > :first-child {
     display: flex !important;
     align-items: center !important;
+    box-sizing: border-box !important;
     width: 100% !important;
     min-width: 0 !important;
-    gap: 8px !important;
+    gap: 4px !important;
     padding-left: 20px !important;
   }
   [data-phase] header > :first-child > :first-child {
@@ -246,7 +247,7 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     align-items: center !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
-    gap: 8px !important;
+    gap: 4px !important;
   }
   /* The directory toggle stays at the far left of the header. */
   [data-mobile-nav="toggle"] {
@@ -266,12 +267,13 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [data-phase] header [class$="_headerActions"] {
     display: flex !important;
     align-items: center !important;
+    box-sizing: border-box !important;
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    max-width: calc(100% - 36px) !important;
+    max-width: calc(100% - 32px) !important;
     margin-left: auto !important;
     justify-content: flex-end !important;
-    gap: 6px !important;
+    gap: 4px !important;
   }
   /* The title yields before the metadata lane and never paints outside it. */
   [data-phase] header [class$="_crumbs"] {
@@ -282,13 +284,13 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
-  /* Mode label: preserve its icon and a readable minimum, then ellipsize its
+  /* Mode label: preserve its icon and a compact text lane, then ellipsize its
      text only after the title has yielded available width. */
   [data-phase] header [class$="_label"]:has(> svg) {
     order: 1 !important;
     flex: 0 1 auto !important;
-    min-width: 5.5rem !important;
-    max-width: min(42vw, 220px) !important;
+    min-width: 0 !important;
+    max-width: min(38vw, 160px) !important;
     display: block !important;
     position: relative !important;
     box-sizing: border-box !important;
@@ -304,12 +306,13 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     top: 50% !important;
     transform: translateY(-50%) !important;
   }
-  /* Running/subagent controls retain natural width and never wrap. */
+  /* Running/subagent controls retain their status and hit areas, but their
+     parent action lane may shrink enough to keep Files inside the viewport. */
   [data-phase] header [class$="_root"]:has(> button[class$="_trigger"]) {
     order: 2 !important;
-    flex: 0 0 auto !important;
-    min-width: max-content !important;
-    max-width: none !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: max-content !important;
     white-space: nowrap !important;
     position: static !important;
   }
@@ -319,14 +322,15 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   }
   [data-phase] header [data-mobile-nav="files"] {
     order: 3 !important;
-    flex: 0 0 auto !important;
+    flex: 0 0 28px !important;
+    width: 28px !important;
   }
   @media (max-width: 479px) {
     [data-phase] header [class$="_headerActions"] {
-      gap: 4px !important;
+      gap: 3px !important;
     }
     [data-phase] header [class$="_label"]:has(> svg) {
-      max-width: 36vw !important;
+      max-width: 34vw !important;
     }
   }
   /* Session log download: gone from the header row on mobile (the utilities
