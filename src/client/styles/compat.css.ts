@@ -583,11 +583,79 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   [data-mobile-nav="frame"] .meme-picker .mp-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .3)) transparent !important;
   }
   [data-mobile-nav="frame"] .meme-picker .mp-cell {
     width: 100% !important;
     height: auto !important;
     aspect-ratio: 1 !important;
+  }
+  /* dsh-meme 网格右侧滚动条：默认 WebKit 滚动条在手机上看太粗,压成 4px
+     细条——保留滚动指示又不占横向空间,thumb 圆角浅色、轨道透明。 */
+  [data-mobile-nav="frame"] .meme-picker .mp-grid::-webkit-scrollbar {
+    width: 4px !important;
+  }
+  [data-mobile-nav="frame"] .meme-picker .mp-grid::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .3)) !important;
+    border-radius: 999px !important;
+  }
+  [data-mobile-nav="frame"] .meme-picker .mp-grid::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  /* ---------- agent preset 模式选择菜单：手机端紧凑底部弹层 ----------
+     The official agent-preset menu (role=menu, portal mounted on body) uses
+     position:fixed + max-height:820px + bottom:12px, so on a phone it
+     stretches from the trigger down to 12px above the screen bottom —
+     effectively filling the screen. Turn it into a polished bottom sheet:
+     cap the height, center it horizontally (the official max-width 360px
+     left-anchors at left:12px, leaving 12/18px asymmetric gaps), add a
+     drag-handle affordance, breathing room, and softer top radius; the
+     inner viewport keeps scrolling. Scoped to the agent-preset item class
+     (cubgiG_*) so other role=menu dropdowns (model/access mode) are
+     untouched. Desktop ≥1024px is outside the media query, so it keeps the
+     official large dropdown. */
+  [role="menu"]:has([class*="cubgiG_item"]) {
+    top: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 12px !important;
+    transform: translateX(-50%) !important;
+    width: min(100% - 24px, 360px) !important;
+    max-width: 360px !important;
+    max-height: min(55dvh, 440px) !important;
+    padding: 30px 6px 10px !important;
+    border-radius: 16px !important;
+  }
+  [role="menu"]:has([class*="cubgiG_item"])::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--dsw-alias-border-l2, rgba(0, 0, 0, .22)) !important;
+    pointer-events: none;
+  }
+  /* 菜单内部滚动条：默认 WebKit 滚动条在竖屏太粗,会占 ~15px 宽度把文字描述
+     挤窄,导致描述换行/截断不自然。压成 4px 细条(与表情网格一致),文字区域
+     恢复自适应宽度。 */
+  [role="menu"]:has([class*="cubgiG_item"]) [class*="_viewport_"] {
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .3)) transparent !important;
+  }
+  [role="menu"]:has([class*="cubgiG_item"]) [class*="_viewport_"]::-webkit-scrollbar {
+    width: 4px !important;
+  }
+  [role="menu"]:has([class*="cubgiG_item"]) [class*="_viewport_"]::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .3)) !important;
+    border-radius: 999px !important;
+  }
+  [role="menu"]:has([class*="cubgiG_item"]) [class*="_viewport_"]::-webkit-scrollbar-track {
+    background: transparent !important;
   }
 
 /* 搜索框底部间距修复 */

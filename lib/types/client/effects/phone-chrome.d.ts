@@ -78,9 +78,7 @@ export declare function createOverlayTask(t: TranslateNS<typeof NS>, toggleSideb
  */
 export declare function installOverlayInteractions(ctx: ClientContext): void;
 /**
- * Register the shared DOM reconciler tasks that used to each own a full-tree
- * MutationObserver. The React FAB task is registered separately from the
- * overlay component because it drives React state. Returns a disposer that
+ * Register the shared DOM reconciler tasks. Returns a disposer that
  * unregisters every task and resets the flag, so a same-environment plugin
  * reload can rebuild the reconciler from scratch.
  */

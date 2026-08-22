@@ -126,10 +126,8 @@ export function installReconciler(ctx: ClientContext): () => void {
   reconcilerInstalled = true
   installMobileEffect(ctx, 'dsh-mobile-nav: DOM reconciler', () => {
     // Coalesce every mutation burst (typing, animations, per-token TPS
-    // re-renders) into one dirty-key pass per animation frame instead of
-    // running every task synchronously per mutation. Until every task
-    // declares scopes, all of them stay unscoped and run on every flush —
-    // behavior is identical to the previous full pass.
+    // re-renders) into one dirty-key pass per animation frame. Each task
+    // declares scopes so only intersecting tasks run on a given flush.
     const observer = new MutationObserver((records) => {
       const keys = new Set<string>()
       for (const record of records) {
@@ -428,9 +426,7 @@ export function installOverlayInteractions(ctx: ClientContext): void {
 }
 
 /**
- * Register the shared DOM reconciler tasks that used to each own a full-tree
- * MutationObserver. The React FAB task is registered separately from the
- * overlay component because it drives React state. Returns a disposer that
+ * Register the shared DOM reconciler tasks. Returns a disposer that
  * unregisters every task and resets the flag, so a same-environment plugin
  * reload can rebuild the reconciler from scratch.
  */
@@ -447,63 +443,6 @@ export function registerReconcileTasks(ctx: ClientContext): () => void {
     addReconcilerTask(createStatsLineTask()),
     addReconcilerTask(createOverlayTask(t, () => ctx.layout.toggleSidebar())),
   ]
-  // Fix dshmarket plugin market spacing: directly manipulate DOM
-  // by locating elements via text content ("Discover", "搜索插件").
-  installMobileEffect(ctx, 'dsh-mobile-nav: market spacing fix', () => {
-    let active = true
-    let observer: MutationObserver | null = null
-    let applied = false
-
-    function applyFix() {
-      if (applied || !active) return
-
-      const dialog = document.querySelector('[aria-modal="true"], [role="dialog"]')
-      if (!dialog) return
-
-      const discoverBtn = Array.from(dialog.querySelectorAll('button')).find(
-        (b) => b.textContent?.trim() === 'Discover'
-      )
-      if (!discoverBtn) return
-
-      const tabsContainer = discoverBtn.closest('[class*="tabs"]') || discoverBtn.parentElement
-      if (!tabsContainer) return
-
-      const searchInput = dialog.querySelector('input[placeholder*="搜索插件"]')
-      if (!searchInput) return
-
-      const searchRow = searchInput.closest('[class*="tabSearchRow"]') || searchInput.parentElement
-      if (!searchRow) return
-
-      ;(tabsContainer as HTMLElement).style.flexWrap = 'wrap'
-      ;(tabsContainer as HTMLElement).style.rowGap = '4px'
-
-      ;(searchRow as HTMLElement).style.paddingTop = '2px'
-      ;(searchRow as HTMLElement).style.paddingBottom = '6px'
-
-      applied = true
-      console.log('[dsh-mobile-nav] ✅ Market spacing fix applied')
-    }
-
-    observer = new MutationObserver(() => {
-      if (document.querySelector('[aria-modal="true"], [role="dialog"]')) {
-        setTimeout(applyFix, 300)
-        setTimeout(applyFix, 800)
-        setTimeout(applyFix, 1500)
-      } else {
-        applied = false
-      }
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-    setTimeout(applyFix, 500)
-
-    // 清理函数
-    return () => {
-      active = false
-      if (observer) { observer.disconnect(); observer = null }
-      applied = false
-    }
-  })
-
   return () => {
     for (const remove of removeTasks) remove()
     reconcileTasksRegistered = false

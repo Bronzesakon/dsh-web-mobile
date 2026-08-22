@@ -47,6 +47,11 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 ## 更新内容
 
+### Unreleased
+
+- dsh-meme 表情卡片贴齐输入区两侧，网格随宽度铺满，滚动条改为细条
+- Agent preset 模式选择菜单改为底部弹层，不再撑满竖屏
+
 ### v2.0.0
 
 **修复**
