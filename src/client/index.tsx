@@ -1,12 +1,12 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { MobileNavToggle } from './MobileNavToggle.tsx'
-import { MobileDrawerFooter } from './MobileDrawerFooter.tsx'
+import { MobileNavToggle } from './components/MobileNavToggle.tsx'
+import { MobileDrawerFooter } from './components/MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
-import { installDebugBadge } from './debug.ts'
+
 import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
-import { NS, en, zh } from './locales.ts'
-import type { MobileNavKey } from './locales.ts'
+import { NS, en, zh } from './i18n/locales.ts'
+import type { MobileNavKey } from './i18n/locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -129,8 +129,7 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'dsh-mobile-nav: reconciler infrastructure')
 
-  // Diagnostic overlay for phone-side repros (?mobile-nav-debug=1).
-  installDebugBadge(ctx)
+
 
   // Drawer close interactions: Escape and navigation taps inside the drawer.
   installOverlayInteractions(ctx)

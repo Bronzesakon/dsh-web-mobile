@@ -616,6 +616,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      (cubgiG_*) so other role=menu dropdowns (model/access mode) are
      untouched. Desktop ≥1024px is outside the media query, so it keeps the
      official large dropdown. */
+  /* agent-preset 菜单依赖 @deepseek-ai/dsh-client-ui-agent-preset 的 CSS Module 哈希 (cubgiG_*)，升级该包时需验证此选择器是否仍有效 */
   [role="menu"]:has([class*="cubgiG_item"]) {
     top: auto !important;
     left: 50% !important;
