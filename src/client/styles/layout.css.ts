@@ -401,19 +401,48 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [data-phase] header > :first-child > :last-child {
     display: none !important;
   }
-  /* When a background-job trigger is present in the header actions, it
-     consumes the width the mode label would otherwise use. On narrow phones
-     this squeezes the crumbs nav so hard that the subagent count is clipped
-     by the nav's overflow:hidden — the text looks overwritten and the
-     trigger's right edge stops being reliably tappable. Yield first: keep
-     only the mode icon (mode text is the lowest-priority item) so the
-     subagent/running status stays whole. */
+  /* Header crowding on narrow phones.
+     A background-job trigger in the header actions, or a running-subagent
+     count ("N 个子代理，正在运行"), consumes the width the mode label would
+     otherwise use. This squeezes the crumbs nav so hard that the subagent
+     count is clipped by the nav's overflow:hidden — the text looks
+     overwritten and the trigger's right edge stops being reliably tappable.
+     Mode text is the lowest-priority item, so it is compressed first. */
   @media (max-width: 440px) {
-    [data-phase] header [class$="_headerActions"]:has([class$="_root"]) [class$="_label"]:has(> svg) {
+    [data-phase] header [class$="_crumbs"] {
+      padding-right: 8px !important;
+    }
+    [data-phase] header [class$="_headerActions"]:has([class$="_root"]) [class$="_label"]:has(> svg),
+    [data-phase] header:has([class$="_crumbs"] [class$="_activitySlot"]) [class$="_label"]:has(> svg) {
       max-width: 18px !important;
       min-width: 18px !important;
       padding-left: 18px !important;
       padding-right: 0 !important;
+    }
+  }
+  /* When a running subagent AND a background job are present together, even
+     the mode icon is not enough room by itself. Keep the full subagent count
+     (the reported-overwritten text) by compacting the job trigger to its
+     dot/chevron, and keep mode icon-only so the crumbs nav can also hold a
+     small right-hand gap — the subagent text should never sit flush against
+     the mode component. */
+  @media (max-width: 559px) {
+    [data-phase] header [class$="_crumbs"] {
+      padding-right: 8px !important;
+    }
+    [data-phase] header:has([class$="_crumbs"] [class$="_activitySlot"]) [class$="_headerActions"] [class$="_root"]:has(> button[class$="_trigger"]) [class$="_count"] {
+      display: none !important;
+    }
+    [data-phase] header:has([class$="_crumbs"] [class$="_activitySlot"]):has([class$="_headerActions"] [class$="_root"]) [class$="_label"]:has(> svg) {
+      max-width: 18px !important;
+      min-width: 18px !important;
+      padding-left: 18px !important;
+      padding-right: 0 !important;
+    }
+  }
+  @media (max-width: 359px) {
+    [data-phase] header:has([class$="_crumbs"] [class$="_activitySlot"]):has([class$="_headerActions"] [class$="_root"]) [class$="_label"]:has(> svg) {
+      display: none !important;
     }
   }
 
