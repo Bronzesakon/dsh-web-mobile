@@ -666,14 +666,14 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
 
 
 /* ===== 已安装列表：路径单行截断 ===== */
-[class*="irow"] > div > [class*="spec"] {
+[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > div > [class*="spec"] {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   max-width: 100% !important;
   font-size: 12px !important;
 }
-[class*="irow"] > div > [class*="nm"] {
+[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > div > [class*="nm"] {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -681,34 +681,62 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
 }
 /* ===== 已安装列表：手机端纵向重排 ===== */
 @media (max-width: 1023px) {
-  [class*="irow"] {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) {
     flex-wrap: wrap !important;
     align-items: center !important;
     gap: 4px 10px !important;
   }
-  [class*="irow"] > div:first-child {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > div:first-child {
     flex: 1 1 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
   }
-  [class*="irow"] > [class*="grow"] {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > [class*="grow"] {
     flex: 1 1 auto !important;
   }
-  [class*="irow"] > button {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > button {
     flex: 0 0 auto !important;
   }
-  [class*="irow"] > button[class*="switch"] {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > button[class*="switch"] {
     order: 3 !important;
   }
-  [class*="irow"] > button:not([class*="switch"]) {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > button:not([class*="switch"]) {
     order: 2 !important;
   }
-  [class*="irow"] > [class*="owner"] {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > [class*="owner"] {
     order: 1 !important;
   }
-  [class*="irow"] > [class*="grow"] {
+  [class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"]) > [class*="grow"] {
     order: 0 !important;
   }
+}
+/* ===== 市场卡片图片容器：横向滚动 ===== */
+[data-mobile-nav="frame"] [class*="cardShots"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 8px !important;
+  padding: 4px 0 !important;
+}
+[data-mobile-nav="frame"] [class*="cardShots"] > [class*="cardShot"] {
+  flex: 0 0 min(100%, 420px) !important;
+  width: min(100%, 420px) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+[data-mobile-nav="frame"] [class*="cardShots"]::-webkit-scrollbar {
+  height: 4px !important;
+}
+[data-mobile-nav="frame"] [class*="cardShots"]::-webkit-scrollbar-thumb {
+  background: var(--ds-border-color, #ccc) !important;
+  border-radius: 4px !important;
 }
 }
 
