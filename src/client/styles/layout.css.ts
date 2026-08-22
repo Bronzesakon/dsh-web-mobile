@@ -401,6 +401,21 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
   [data-phase] header > :first-child > :last-child {
     display: none !important;
   }
+  /* When a background-job trigger is present in the header actions, it
+     consumes the width the mode label would otherwise use. On narrow phones
+     this squeezes the crumbs nav so hard that the subagent count is clipped
+     by the nav's overflow:hidden — the text looks overwritten and the
+     trigger's right edge stops being reliably tappable. Yield first: keep
+     only the mode icon (mode text is the lowest-priority item) so the
+     subagent/running status stays whole. */
+  @media (max-width: 440px) {
+    [data-phase] header [class$="_headerActions"]:has([class$="_root"]) [class$="_label"]:has(> svg) {
+      max-width: 18px !important;
+      min-width: 18px !important;
+      padding-left: 18px !important;
+      padding-right: 0 !important;
+    }
+  }
 
   /* --- Header popovers on mobile (dsh-client-ui-jobs / dsh-client-ui-subagent) --- */
   /* The official entries sit in the session header actions. Their popovers
