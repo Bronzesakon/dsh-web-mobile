@@ -261,6 +261,51 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     max-width: 100% !important;
   }
 
+  /* ---------- dshmarket polish: Tasks operations popup ----------
+     Upstream .opPanel is a small dropdown pinned to the right edge of its
+     ~54px trigger button; on a phone it reads as stuck to the sheet edge
+     instead of centered. Promote it to a fixed, viewport-centered card:
+     no ancestor between the popup and the viewport carries a transform,
+     so position:fixed centers against the real viewport (a plain left:50%
+     would resolve against the tiny relative trigger wrapper and land even
+     further right). The upstream 86vw width cap, 70vh max-height and
+     internal scroll all still apply; the close button stays inside. */
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_opPanel"] {
+    position: fixed !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  /* ---------- dshmarket polish: header title row ----------
+     The title row (icon + title + repo link + version + optional
+     "Update market" / "Update all" buttons) is a nowrap flex whose
+     natural width (~450px with both update buttons) exceeds the ~334px
+     sheet. Flex then crushes the flexible items below their content
+     width and every label wraps word-by-word — the "text turns
+     vertical" report. Trigger is state-dependent (the buttons only
+     exist while plugin updates are pending), which explains the
+     sometimes-horizontal/sometimes-vertical flapping. Let the row wrap
+     instead: line 1 keeps icon + title + repo + version, the update
+     buttons get their own full-width-feeling second line, and the title
+     itself is locked to one ellipsized line no matter what follows it. */
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] {
+    flex-wrap: wrap !important;
+    row-gap: 6px !important;
+  }
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] [class$="_title"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] button {
+    white-space: nowrap !important;
+  }
+
   /* ---------- dsh-usage-stats polish: usage & balance panel ----------
      The panel's stats row shows three token counters side by side
      (today / month / total). The counters use tabular nowrap figures whose

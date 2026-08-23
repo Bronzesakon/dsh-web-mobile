@@ -96,6 +96,7 @@ dsh web
 - **合并涉及 CSS 字符串的 PR 会冲突在生成文件**：`lib/types/client/styles/*.css.d.ts` 和 `.d.ts.map` 是单行大字符串，双方只要都改过同一 CSS 模块，git 会在这些生成文件上报行级冲突。解法是合并后跑 `pnpm build` 重建 lib 再 `git add`，不要手工编辑 d.ts。
 
 - **已安装列表的 outer-row 选择器必须排除嵌套 action 容器**：最新版 dshmarket 的 `eGUBIq_irowActions` 与 `eGUBIq_irowTrailing` 类名都包含 `irow`。若使用宽泛的 `[class*="irow"]`，移动端内联 effect 会把 action 容器也设置为 `flex-wrap:wrap`，并把状态标签/路径元数据强制 `flex:1 1 100%`，导致启用状态、更新/卸载按钮和开关错位。outer row 必须使用 `[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"])`；该 effect 在切回 ≥1024px 时还必须清理自己写入的 inline 属性。
+- **市场头部「文字变竖排」的触发器是待更新按钮**：dshmarket 标题行（`_titleRow`，nowrap flex）在有插件待更新时会渲染 "Update market"/"Update all" 按钮，自然宽度 ~450px 超出 ~334px 表单，flex 把 `_title` 和按钮压到内容宽以下逐词换行——表现为文字时横时竖（按钮仅在有待更新时存在）。已在 `compat.css.ts` 修复：行改 wrap、`_title` 锁单行 ellipsis、行内 button nowrap。同区还有 Tasks 弹卡（`_opPanel`）的 fixed 居中规则；两处哈希前缀均为 `eGUBIq_`，升级后回来对账。
 - **`?mobile-nav-debug=1` 的 debug badge 不能观察自己写入的子树**：badge 位于 `document.body` 内，而 `paint()` 写 `badge.textContent` 会产生 childList mutation；若 MutationObserver 直接以 `paint` 为回调，会把自身输出再次喂给 `paint()`，造成页面硬冻结（headless/真实浏览器都会卡在 "Loading plugins…"）。回调必须跳过 `badge` 自身及其子树上的 mutation（`record.target === badge || badge.contains(record.target)`），否则调试模式本身就是事故源。
 - **CSS 模板字符串注释内禁止反引号**：`src/client/styles/*.css.ts` 的 CSS 是 TypeScript 模板字面量，注释里写 Markdown 反引号会提前终止模板，tsc 报 `TS1005`。引用类名用普通引号或纯文本。
 - CSS relies on `:has()` and therefore requires Chromium 105+; unsupported `:has()` rules can disappear silently in old WebViews. Preserve `prefers-reduced-motion` behavior.
@@ -104,6 +105,7 @@ dsh web
 
 ## Testing & QA
 
+- **设置/插件市场调试地图**：`docs/debug/settings-market-debug-map.md` —— 设置区与市场 UI 的 DOM 层级图、入口链路、CSS module 哈希对照表（VOzbGW_/eGUBIq_/hHd-Xa_…）、compat 干预点索引与 CDP 取证 SOP。排查该区域布局/弹层问题先读它，不要重新摸索层级。（此文档仅本地保留，已加入 .gitignore 不随仓库上传。）
 - Automated gates: `pnpm verify` (typecheck) and `pnpm test:core` (reconciler-core unit tests). `pnpm build` additionally exercises the custom client bundler. Use `git diff --check` for whitespace hygiene.
 - There is no linter, formatter, coverage setup, or CI workflow.
 - After source/layout changes, install the linked plugin in a real DSH Web profile, restart `dsh web`, and check both sides of the breakpoint:
@@ -113,7 +115,9 @@ dsh web
 - For phone-side debugging, add `?mobile-nav-debug=1` to display live viewport, frame/marker, floating-panel, and captured-JavaScript-error state. The optional `pnpm smoke:cdp` is a targeted smoke probe, not a replacement for real-profile checks.
 - Playwright 验证 DSH Web 移动端布局必须用**全新 browser context**，并通过 `addInitScript` 写入 `localStorage['dsh.sessions.current'] = JSON.stringify({sessionId})`；复用长活 context 会出现「fence-only」假象（见 Pitfalls「页面状态/bundle 校验」）。点 backdrop 关抽屉时默认点元素中心会被抽屉盖住，改用 `page.mouse.click(x, y)` 点抽屉右侧露出区域。
 - 不要用 Playwright route 拦截插件 `client.js` 并 fulfill 空 body 做 A/B 实验：空响应被缓存后 boot 会报「loaded without registering」并挂起。A/B 用 `git show <commit>:lib/client.js > lib/client.js` 换文件。
-- Validate compatible third-party versions when exercising integrations: `dsh-web-ui-all` 0.1.14, `dshmarket` 1.2.2, `dsh-usage-stats` 0.1.2, `@omdsh-dev/dsh-genui` 0.8.3.
+- **Playwright MCP 报「Session not found」或 MCP 恢复无望时，用原生 CDP 写 Node 探针**（2026-08-23 实测：playwright-core 的 registry 在 android 平台直接抛 `Unsupported platform: android`——无论全局 @playwright/mcp 自带副本还是 openclaw 副本，`chromium.launch()` 都起不来，别再试）。可行做法：spawn 系统 chromium（`--headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=<port> --user-data-dir=<dir>`）+ fetch `/json` 取 webSocketDebuggerUrl + 原生 WebSocket 收发 CDP（Page.navigate / Runtime.evaluate(returnByValue) / Input.dispatchMouseEvent / Page.captureScreenshot / Emulation.setDeviceMetricsOverride）；可参考 `scripts/cdp-probe.mjs` 的 createCdpClient 实现。会话注入仍在导航前 `Page.addScriptToEvaluateOnNewDocument` 写 `localStorage['dsh.sessions.current']`。
+- **Termux 上 headless chromium 必须给可写的 TMPDIR 与 XDG_RUNTIME_DIR**（spawn env 指到 `~/tmp` 下自建目录），否则 ProcessSingleton 建 socket 失败报「Failed to create a ProcessSingleton」直接退出、CDP 端口永不上线。临时脚本与截图放 `~/tmp/` 用完清理；视觉工具（vision_glance/describe_image）只接受 workspace 内路径且依赖外部视觉凭证（401=凭证失效，别硬重试）。
+- Validate compatible third-party versions when exercising integrations: `@linxin666/dsh-web-ui-all` 0.1.16, `dshmarket` 1.18.0, `dsh-usage-stats` (github), `@omdsh-dev/dsh-genui` (github)。以 `~/.dsh/profiles/web/package.json` 实装为准，升级后回来对账。
 
 ## Maintenance
 
