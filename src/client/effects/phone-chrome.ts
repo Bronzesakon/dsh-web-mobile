@@ -196,7 +196,14 @@ export function installPhoneChrome(ctx: ClientContext): void {
     const bodyBg = (): string => getComputedStyle(document.body).backgroundColor
 
     const sync = (): void => {
-      if (viewport !== null) viewport.content = 'width=device-width, initial-scale=1, viewport-fit=cover'
+      if (viewport !== null) {
+        // iOS Safari auto-zooms when focusing any field below 16px unless the
+        // viewport meta carries maximum-scale=1. The host page may set that
+        // flag; this rewrite REPLACES the meta, so carry the token forward
+        // instead of dropping it (dispose restores the original anyway).
+        const locked = /(^|,)\s*maximum-scale\s*=/.test(viewport.content)
+        viewport.content = `width=device-width, initial-scale=1${locked ? ', maximum-scale=1' : ''}, viewport-fit=cover`
+      }
       themeMeta.content = bodyBg()
       if (themeMeta.parentElement === null) document.head.appendChild(themeMeta)
     }
