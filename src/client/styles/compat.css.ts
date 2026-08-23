@@ -306,6 +306,21 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     white-space: nowrap !important;
   }
 
+  /* ---------- dshmarket 1.20+ compat: keep the settings nav visible ----------
+     Upstream Market.module.css hides the host dialog's nav on phones
+     ([role=dialog]:has([data-dsh-market-root]) > nav { display:none } at
+     max-width:560px) so the market can take over the dialog; its comment
+     assumes the host keeps "its own close button in the content header".
+     Our host's only close ✕ lives inside that very nav, so the market
+     would leave no categories and no way back or out (dead-end UI,
+     2026-08-23). Mirror upstream's exact media condition and restore the
+     nav: categories row + ✕ stay above the inline market page. */
+  @media (max-width: 560px) {
+    [data-mobile-nav="frame"] [role="dialog"]:has([data-dsh-market-root]) > nav {
+      display: flex !important;
+    }
+  }
+
   /* ---------- dsh-usage-stats polish: usage & balance panel ----------
      The panel's stats row shows three token counters side by side
      (today / month / total). The counters use tabular nowrap figures whose
