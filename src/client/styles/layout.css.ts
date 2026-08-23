@@ -117,7 +117,7 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
     white-space: nowrap !important;
   }
 
-  [data-phase] [class*="_scroll"]:has(p) {
+  [data-phase] [class*="_scroll"]:not([class*="_scrollBody"]):has(p) {
     padding-left: 20px;
     padding-right: 20px;
     font-size: 15px !important;
@@ -126,9 +126,9 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout ---------- */
      list items, so the container's inherited 15px is not enough. User
      messages render their text in a div whose class carries _text_
      (16px too) — cover it as well. */
-  [data-phase] [class*="_scroll"]:has(p) p,
-  [data-phase] [class*="_scroll"]:has(p) li,
-  [data-phase] [class*="_scroll"]:has(p) [class*="_text_"] {
+  [data-phase] [class*="_scroll"]:not([class*="_scrollBody"]):has(p) p,
+  [data-phase] [class*="_scroll"]:not([class*="_scrollBody"]):has(p) li,
+  [data-phase] [class*="_scroll"]:not([class*="_scrollBody"]):has(p) [class*="_text_"] {
     font-size: 15px !important;
   }
 

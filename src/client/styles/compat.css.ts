@@ -423,7 +423,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      header, search box and tree rows so a phone shows more entries, and pad
      the scroll bottom so the last row never sits flush on the edge. */
 
-  [data-aionui-explorer-col] [class*="_tabBar"] {
+  [data-aionui-explorer-col] [class*="_tabBar"]:not([class*="_tabBarRight"]) {
     height: 36px !important;
   }
   [data-aionui-explorer-col] [class*="_tabBtn"],
