@@ -164,7 +164,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   }
   /* Keep the last tab (and the "+" URL-tab trigger) from sliding under the
      fullscreen toggle: reserve the right end of the preview tab row. */
-  [data-aionui-preview-col] [class$="_tabScroll"] {
+  [data-aionui-preview-col] [class*="_tabScroll"] {
     padding-right: 34px !important;
   }
   /* Visible only while the preview sheet is open. Visibility itself is
@@ -224,7 +224,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
 
   /* Task board: five kanban columns at minmax(0,1fr) crush into ~78px phone
      strips. Give every column a usable minimum and let the row scroll. */
-  [data-dsh-taskboard-board] > [class$="_columns"] {
+  [data-dsh-taskboard-board] > [class*="_columns"] {
     grid-template-columns: repeat(5, minmax(240px, 1fr)) !important;
     overflow-x: auto !important;
   }
@@ -238,7 +238,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   }
   /* Board header: let the search field take the slack instead of squeezing
      the action buttons. */
-  [data-dsh-taskboard-board] > [class$="_boardHeader"] [class$="_search"] {
+  [data-dsh-taskboard-board] > [class*="_boardHeader"] [class*="_search"] {
     flex: 1 1 auto !important;
     min-width: 80px !important;
   }
@@ -251,11 +251,11 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      the sheet's options area). Let the row wrap: the tabs keep the first
      line and the search box gets its own full-width second line. */
 
-  [aria-modal="true"] [class$="_tabs"] {
+  [aria-modal="true"] [class*="_tabs"] {
     flex-wrap: wrap !important;
     row-gap: 8px !important;
   }
-  [aria-modal="true"] [class$="_searchInline"] {
+  [aria-modal="true"] [class*="_searchInline"] {
     flex: 1 1 100% !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -291,18 +291,18 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      instead: line 1 keeps icon + title + repo + version, the update
      buttons get their own full-width-feeling second line, and the title
      itself is locked to one ellipsized line no matter what follows it. */
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_titleRow"] {
     flex-wrap: wrap !important;
     row-gap: 6px !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] [class$="_title"] {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_titleRow"] [class*="_title"] {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_titleRow"] button {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_titleRow"] button {
     white-space: nowrap !important;
   }
 
@@ -329,10 +329,10 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      Stack the three counters vertically — full-width rows, so the figures
      always fit. */
 
-  [class*="usg_"][class$="_statsRow"] {
+  [class*="usg_"][class*="_statsRow"] {
     flex-direction: column !important;
   }
-  [class*="usg_"][class$="_stat"] {
+  [class*="usg_"][class*="_stat"]:not([class*="_statsRow"]) {
     flex: 0 0 auto !important;
     width: 100% !important;
     min-width: 0 !important;
@@ -351,7 +351,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      one-row attempt had no scroll affordance and silently cut the last
      tab off; the thin scrollbar IS the affordance. Scoped to the frame
      marker: the desktop dialog keeps its official vertical nav column. */
-  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])) > :first-child [class$="_navList"] {
+  [data-mobile-nav="frame"] [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])) > :first-child [class*="_navList"] {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -363,17 +363,17 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   }
   /* Hairline scrollbar for the tab row: the default WebKit scrollbar reads
      fat on a phone; 2px keeps the scroll affordance without the bulk. */
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_navList"]::-webkit-scrollbar {
     height: 2px !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar-thumb {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_navList"]::-webkit-scrollbar-thumb {
     background: var(--dsw-alias-border-l2, rgba(0, 0, 0, .22)) !important;
     border-radius: 1px !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navList"]::-webkit-scrollbar-track {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_navList"]::-webkit-scrollbar-track {
     background: transparent !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navCell"] {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_navCell"] {
     flex: 0 0 auto !important;
     white-space: nowrap !important;
     padding: 6px 8px !important;
@@ -381,7 +381,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     font-size: 13px !important;
     justify-content: flex-start !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_navCell"] svg {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_navCell"] svg {
     width: 14px !important;
     height: 14px !important;
     flex: none !important;
@@ -390,31 +390,31 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      mobile — it is rarely needed on a phone and steals ~180px from the
      tab row's scroll area (user feedback 2026-08-16). Only the close ✕
      stays, flush right in the nav row. Desktop untouched (frame scoped). */
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_header"] [class$="_actions"] {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_header"]:not([class*="_headerActions"]) [class*="_actions"] {
     display: none !important;
   }
-  [data-mobile-nav="frame"] [aria-modal="true"] [class$="_header"] [class$="_actions"] [class$="_action"] {
+  [data-mobile-nav="frame"] [aria-modal="true"] [class*="_header"]:not([class*="_headerActions"]) [class*="_actions"] [class*="_action"]:not([class*="_actions"]) {
     font-size: 13px !important;
     padding: 6px 12px !important;
     min-height: 0 !important;
   }
   /* Setting rows: text on top, control below at full width. */
-  [aria-modal="true"] [class$="_section"] [class$="_row"] {
+  [aria-modal="true"] [class*="_section"] [class*="_row"] {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 8px !important;
   }
-  [aria-modal="true"] [class$="_section"] [class$="_row"] > :first-child {
+  [aria-modal="true"] [class*="_section"] [class*="_row"] > :first-child {
     width: 100% !important;
     max-width: none !important;
   }
-  [aria-modal="true"] [class$="_section"] [class$="_row"] > :last-child {
+  [aria-modal="true"] [class*="_section"] [class*="_row"] > :last-child {
     width: 100% !important;
     max-width: none !important;
   }
   /* Appearance mode group: give the cube row a consistent bordered
      segmented look (the official borders differ per state). */
-  [aria-modal="true"] [class$="_cubeRow"] > * {
+  [aria-modal="true"] [class*="_cubeRow"] > * {
     border: 1px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .12)) !important;
   }
 
@@ -423,15 +423,15 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      header, search box and tree rows so a phone shows more entries, and pad
      the scroll bottom so the last row never sits flush on the edge. */
 
-  [data-aionui-explorer-col] [class$="_tabBar"] {
+  [data-aionui-explorer-col] [class*="_tabBar"] {
     height: 36px !important;
   }
-  [data-aionui-explorer-col] [class$="_tabBtn"],
-  [data-aionui-explorer-col] [class$="_tabBtnActive"] {
+  [data-aionui-explorer-col] [class*="_tabBtn"],
+  [data-aionui-explorer-col] [class*="_tabBtnActive"] {
     padding: 0 12px !important;
     font-size: 13px !important;
   }
-  [data-aionui-explorer-col] [class$="_searchBox"] {
+  [data-aionui-explorer-col] [class*="_searchBox"] {
     height: 32px !important;
     font-size: 13px !important;
   }
@@ -443,7 +443,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     width: 14px !important;
     height: 14px !important;
   }
-  [data-aionui-explorer-col] [class$="_scrollArea"] {
+  [data-aionui-explorer-col] [class*="_scrollArea"] {
     padding-bottom: 28px !important;
   }
 
@@ -454,7 +454,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
   /* The official footerActions row also hosts the remote-web-ui entry
      row (two icon buttons); without wrapping the two groups squeeze each
      other on one line. Wrap so each group gets its own full-width row. */
-  [data-mobile-nav="frame"] [class$="_footerActions"] {
+  [data-mobile-nav="frame"] [class*="_footerActions"] {
     flex-wrap: wrap !important;
     gap: 6px !important;
   }
@@ -474,14 +474,14 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
      still work (the position itself is left alone — the mobile default
      position is seeded via the pet API to just above the composer). */
 
-  body > [class$="_float"]:has([class$="_sprite"][role="button"]) {
+  body > [class*="_float"]:has([class*="_sprite"][role="button"]) {
     transform: scale(.66);
     transform-origin: bottom right;
   }
   /* While a modal dialog (settings sheet / export) owns the screen the pet
      floats ABOVE it and covers the dialog content; modal semantics say the
      background is inert, so hide the pet for the modal's lifetime. */
-  body:has([aria-modal="true"]) > [class$="_float"]:has([class$="_sprite"][role="button"]) {
+  body:has([aria-modal="true"]) > [class*="_float"]:has([class*="_sprite"][role="button"]) {
     display: none !important;
   }
 
@@ -609,7 +609,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     bottom: auto !important;
     z-index: 1 !important;
   }
-  [data-mobile-nav="frame"] [class$="_card"]:has([data-gitgraph-chip-anchor]) {
+  [data-mobile-nav="frame"] [class*="_card"]:has([data-gitgraph-chip-anchor]) {
     padding-top: 40px !important;
   }
 
