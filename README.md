@@ -54,6 +54,10 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 - 设置「模型分组」区在手机上卡片宽窄不一、首尾卡超出屏幕右缘
 - 后台任务触发器存在时，正在运行的子代理计数不准确
 - 移动端会话头部标题栏布局异常，隐藏多余的路径分隔符
+- 手机上打开插件市场后设置导航被隐藏、无路可退（dshmarket ≥1.20 反制）
+- 市场 Tasks 弹卡贴边不居中；出现待更新按钮时标题行被压成逐词竖排
+- 输入区发送、加号、上下文按钮窄屏下被挤压漂移，现固定尺寸钉位
+- viewport meta 改写保留宿主 maximum-scale，页面缩放行为与官方一致
 
 **优化**
 
@@ -64,6 +68,7 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 **重构**
 
 - 完成 phase 2-4 代码重组，优化 !important 使用
+- 哈希类选择器全量改为子串匹配并补 `:not` 守卫，救活一批静默失效的规则（PR #27/#28 系列）
 
 ### v2.0.0
 
