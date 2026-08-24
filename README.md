@@ -87,8 +87,8 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 - [dsh-web-ui](https://www.npmjs.com/package/@linxin666/dsh-web-ui-all)——**0.1.20**
 - [dshmarket](https://www.npmjs.com/package/dshmarket)——**v1.20.2**
-- [dsh-usage-stats](https://github.com/Ychris12138/dsh-usage-stats)——**0.1.2**
-- [dsh-genui](https://github.com/omdsh-dev/dsh-genui)——**0.8.3**
+- [dsh-usage-stats](https://github.com/Ychris12138/dsh-usage-stats)——**0.2.10**
+- [dsh-genui](https://github.com/omdsh-dev/dsh-genui)——**0.9.1**
 - [dsh-meme](https://github.com/mexiaosqwq/dsh-meme)——**v0.1.39**
 
 ## 构建
