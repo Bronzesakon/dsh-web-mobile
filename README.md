@@ -47,8 +47,6 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 ## 更新内容
 
-### Unreleased
-
 ### v2.1.1
 
 **修复**
