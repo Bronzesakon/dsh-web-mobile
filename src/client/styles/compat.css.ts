@@ -398,17 +398,22 @@ export const COMPAT_CSS = `@media (max-width: 1023px) {
     padding: 6px 12px !important;
     min-height: 0 !important;
   }
-  /* Setting rows: text on top, control below at full width. */
-  [aria-modal="true"] [class*="_section"] [class*="_row"] {
+  /* Setting rows: text on top, control below at full width. Compound
+     "_row*" families are excluded: the Models page names its whole card
+     list "_rows" (plus "_rowCard/_rowHead/_rowIdentity/_rowActions"), and
+     the bare-substring match used to hand the list's first/last cards a
+     width:100% that - on the official content-box cards (+14px padding,
+     1px border) - ran 30px past their siblings and off-screen. */
+  [aria-modal="true"] [class*="_section"] [class*="_row"]:not([class*="_rows"]):not([class*="_rowCard"]):not([class*="_rowHead"]):not([class*="_rowIdentity"]):not([class*="_rowActions"]) {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 8px !important;
   }
-  [aria-modal="true"] [class*="_section"] [class*="_row"] > :first-child {
+  [aria-modal="true"] [class*="_section"] [class*="_row"]:not([class*="_rows"]):not([class*="_rowCard"]):not([class*="_rowHead"]):not([class*="_rowIdentity"]):not([class*="_rowActions"]) > :first-child {
     width: 100% !important;
     max-width: none !important;
   }
-  [aria-modal="true"] [class*="_section"] [class*="_row"] > :last-child {
+  [aria-modal="true"] [class*="_section"] [class*="_row"]:not([class*="_rows"]):not([class*="_rowCard"]):not([class*="_rowHead"]):not([class*="_rowIdentity"]):not([class*="_rowActions"]) > :last-child {
     width: 100% !important;
     max-width: none !important;
   }
