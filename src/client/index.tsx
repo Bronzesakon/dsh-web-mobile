@@ -4,6 +4,7 @@ import { MobileDrawerFooter } from './components/MobileDrawerFooter.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
 
 import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
+import { installSubagentChipTouch } from './effects/subagent-chip-touch.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
 import { NS, en, zh } from './i18n/locales.ts'
 import type { MobileNavKey } from './i18n/locales.ts'
@@ -147,6 +148,10 @@ export function apply(ctx: ClientContext): void {
 
   // Drawer close interactions: Escape and navigation taps inside the drawer.
   installOverlayInteractions(ctx)
+
+  // Lineage-count chip: reliable open/close on touch pointers (upstream is
+  // hover-timer driven and has no onClick on the count variant).
+  installSubagentChipTouch(ctx)
 
   installPhoneChrome(ctx)
 
