@@ -49,6 +49,8 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 ### Unreleased
 
+### v2.1.1
+
 **修复**
 
 - 设置「模型分组」区在手机上卡片宽窄不一、首尾卡超出屏幕右缘
