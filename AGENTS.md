@@ -120,7 +120,7 @@ dsh web
 - 不要用 Playwright route 拦截插件 `client.js` 并 fulfill 空 body 做 A/B 实验：空响应被缓存后 boot 会报「loaded without registering」并挂起。A/B 用 `git show <commit>:lib/client.js > lib/client.js` 换文件。
 - **Playwright MCP 报「Session not found」或 MCP 恢复无望时，用原生 CDP 写 Node 探针**（2026-08-23 实测：playwright-core 的 registry 在 android 平台直接抛 `Unsupported platform: android`——无论全局 @playwright/mcp 自带副本还是 openclaw 副本，`chromium.launch()` 都起不来，别再试）。可行做法：spawn 系统 chromium（`--headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=<port> --user-data-dir=<dir>`）+ fetch `/json` 取 webSocketDebuggerUrl + 原生 WebSocket 收发 CDP（Page.navigate / Runtime.evaluate(returnByValue) / Input.dispatchMouseEvent / Page.captureScreenshot / Emulation.setDeviceMetricsOverride）；可参考 `scripts/cdp-probe.mjs` 的 createCdpClient 实现。会话注入仍在导航前 `Page.addScriptToEvaluateOnNewDocument` 写 `localStorage['dsh.sessions.current']`。
 - **Termux 上 headless chromium 必须给可写的 TMPDIR 与 XDG_RUNTIME_DIR**（spawn env 指到 `~/tmp` 下自建目录），否则 ProcessSingleton 建 socket 失败报「Failed to create a ProcessSingleton」直接退出、CDP 端口永不上线。临时脚本与截图放 `~/tmp/` 用完清理；视觉工具（vision_glance/describe_image）只接受 workspace 内路径且依赖外部视觉凭证（401=凭证失效，别硬重试）。
-- Validate compatible third-party versions when exercising integrations: `@linxin666/dsh-web-ui-all` 0.1.16, `dshmarket` 1.18.0, `dsh-usage-stats` (github), `@omdsh-dev/dsh-genui` (github)。以 `~/.dsh/profiles/web/package.json` 实装为准，升级后回来对账。
+- Validate compatible third-party versions when exercising integrations: `@linxin666/dsh-web-ui-all` 0.1.20, `dshmarket` 1.20.2, `dsh-usage-stats` (github), `@omdsh-dev/dsh-genui` (github)。以 `~/.dsh/profiles/web/package.json` 实装为准，升级后回来对账。
 
 ## Maintenance
 
