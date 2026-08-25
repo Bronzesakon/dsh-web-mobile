@@ -7,7 +7,7 @@
 - No monorepo, no application server, no workspace layer.
 - Real entrypoints:
   - `cordis.patch.yml` inserts the single host plugin row.
-  - `src/index.ts` is the host half and intentionally exports an empty `apply()` so the row is visible to the host Loader.
+  - `src/index.ts` is the host half: `apply()` makes the row visible to the host Loader and installs transparent gzip/brotli compression for large JSON responses (`src/compress.ts`).
   - `package.json` exposes `./client` and declares `dsh.client.platform: "web"`; DSH discovers the browser half from `src/client/index.tsx`.
 - Key layout:
   - `src/client/` — browser half (components, effects, styles, locales, debug).
@@ -50,7 +50,7 @@ dsh web
 
 ## Architecture
 
-- Host/client split is load-bearing. All browser behavior lives in `src/client/`; the host half stays an empty `apply()`.
+- Host/client split is load-bearing. All browser behavior lives in `src/client/`; the host half only installs the response-compression patch.
 - `src/client/index.tsx` injects `['slots', 'layout', 'locale', 'sessionLogDownload']`. Its `apply()` registers locale dictionaries, injects one `<style data-plugin>` tag, installs effects, and registers exactly two slots:
   - `conversation.session.header.actions` → `MobileNavToggle` (`order: 10`): drawer toggle + Files button.
   - `sidebar.footer.action` → `MobileDrawerFooter` (`order: 5`): Files + session-log actions. Order 5 keeps them below the remote icon row (order default 0) and above usage badges (order 10). Do not tie with usage stats.
@@ -70,7 +70,7 @@ dsh web
 
 ## Conventions
 
-- Keep the host/client split intact; the empty host `apply()` is intentional.
+- Keep the host/client split intact; the host half stays minimal (`apply()` installs only response compression).
 - Use stable `data-*` markers and structural selectors before hashed classes. For unavoidable hashed classes use substring matching (`[class*=_frag]`), never attribute-suffix (`[class$=…]`) — the class attribute often carries extra tokens or trailing spaces, and a suffix test runs against the whole attribute value, so it silently misses (PR #27 migrated all 102 sites). Scope the selector to its owning region and guard prefix-overlapping fragments with `:not`; for tree rows use `[class*="_treeRow"]` and exclude `[class*="_treeArrowEmpty"]` when distinguishing directories from files.
 - Put every long-lived style tag, listener, timer, or `MutationObserver` inside `ctx.effect(() => { ...; return disposer }, label)`. Re-arm width-sensitive effects on `matchMedia('(max-width: 1023px)')` changes via `installMobileEffect` so wide→narrow transitions work.
 - Treat DOM markers as the cross-module state contract: `data-mobile-nav="frame"`, `data-sidebar-collapsed`, `data-aionui-explorer-open`, `data-aionui-preview-open`, `data-mobile-preview-full`, `data-mobile-nav="stats"`.
@@ -106,6 +106,8 @@ dsh web
 - CSS relies on `:has()` and therefore requires Chromium 105+; unsupported `:has()` rules can disappear silently in old WebViews. Preserve `prefers-reduced-motion` behavior.
 - Generated code discipline: `lib/` is intentionally committed because consumers install without a build step. A source change is incomplete until `pnpm build` refreshes it.
 - **页面状态/bundle 校验**：插件加载的 `dsh-mobile-nav/client.js?rev=<12位>` 就是 `sha1sum lib/client.js` 前 12 位（服务端 no-cache 读当前 lib，rev 仅作缓存 bust）；线上对账用完整 URL `http://127.0.0.1:3080/plugins/@dsh-external/dsh-mobile-nav/client.js?rev=<12位>`（2026-08-24 实测；路径猜错会拿到 404 空 body，其 sha1 恒为 da39a3ee5e6b，别误判成版本不一致）。设备出现旧 UI 时先换全新 browser context/清站点数据——复用旧 context 会让 harness web 进入「fence-only」状态（frame 内联 `display:none`、最后一条 dsh-ui fence 挂 app 根级），与插件无关；再用 `sha1sum lib/client.js` 与服务端 rev 比对，不要据此改 mobile-nav 代码。
+
+- **响应压缩是进程级 prototype patch**：`src/compress.ts` 直接替换 `http.ServerResponse.prototype` 的 writeHead/write/end（disposer 还原），作用于 DSH Web 进程内所有响应而不只是本插件路由；仅压缩 ≥4KB 且 content-type 含 json、无既有 content-encoding、客户端 Accept-Encoding 支持 br/gzip 的响应，SSE 有意不压。改动该文件时必须保持三条不变式：小 JSON 原样字节透传（原头不动）、Content-Length 与实发字节数一致、dispose 完整还原三个方法。
 
 ## Testing & QA
 
