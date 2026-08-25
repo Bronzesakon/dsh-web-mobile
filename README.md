@@ -48,11 +48,18 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 ## 更新内容
 
-### Unreleased
+### v2.1.5
 
 **新功能**
 
-- 大 JSON 响应透明压缩：host 半加载时给 Node http.ServerResponse 打补丁，≥4KB 的 JSON 响应按客户端 Accept-Encoding 自动 gzip/brotli 压缩（brotli 优先，fork 实测 17MB → ~1MB）；小体积 JSON 与非 JSON 响应原样透传，SSE 流不受影响。移植自社区 fork wzxmt-zhc/dsh-web-mobile v2.5.0
+- 大 JSON 响应透明压缩，减少流量消耗（移植自 fork wzxmt-zhc/dsh-web-mobile v2.5.0）
+
+**修复**
+
+- 顶部子代理 UI 弹出卡片点按不稳定，现可靠开合
+- 触摸点选会话后抽屉正常自动收起
+- 输入区右侧模型条、上下文圈、发送键固定贴近右侧，不再漂移
+- dsh-web-ui 设置页错误显示
 
 ### v2.1.1
 
