@@ -47,6 +47,12 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 ## 更新内容
 
+### Unreleased
+
+**修复**
+
+- 手机上点抽屉里的历史会话大概率「抽屉收起但对话不打开」：iOS Safari 等浏览器会整体抑制 tap 的合成 click（pointerup 即收抽屉使行在 click 派发前移出手指下方、轻扫漂移被判定为 pan 等场景）。抽屉导航关闭改为自愈式——pointerup 后下一宏任务检查真实 click 是否已处理，未处理则对该行补发一个冒泡 click，React 委托监听照常执行行 onClick 完成跳转，同一 click 冒泡经 document 捕获处理器收起抽屉；真实 click 正常到达时零干预，桌面端不受影响
+
 ### v2.1.1
 
 **修复**
