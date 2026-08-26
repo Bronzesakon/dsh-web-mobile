@@ -108,6 +108,7 @@ dsh web
 - Generated code discipline: `lib/` is intentionally committed because consumers install without a build step. A source change is incomplete until `pnpm build` refreshes it.
 - **页面状态/bundle 校验**：插件加载的 `dsh-mobile-nav/client.js?rev=<12位>` 就是 `sha1sum lib/client.js` 前 12 位（服务端 no-cache 读当前 lib，rev 仅作缓存 bust）；线上对账用完整 URL `http://127.0.0.1:3080/plugins/@dsh-external/dsh-mobile-nav/client.js?rev=<12位>`（2026-08-24 实测；路径猜错会拿到 404 空 body，其 sha1 恒为 da39a3ee5e6b，别误判成版本不一致）。设备出现旧 UI 时先换全新 browser context/清站点数据——复用旧 context 会让 harness web 进入「fence-only」状态（frame 内联 `display:none`、最后一条 dsh-ui fence 挂 app 根级），与插件无关；再用 `sha1sum lib/client.js` 与服务端 rev 比对，不要据此改 mobile-nav 代码。
 
+- **host 半区 ESM 相对导入必须带 `.js` 扩展名**：`tsconfig.json` 用 `moduleResolution: "bundler"`，tsc 把相对说明符原样发射；Node ESM 不猜扩展名 → `ERR_MODULE_NOT_FOUND`，plugin tree 加载失败、`dsh web` 直接崩（实锤 #31：`src/index.ts` 写 `from './compress'` 漏 `.js`）。bundler 模式会把 `./compress.js` 映射回 `compress.ts`，所以源码写 `.js` 即可，不必动 tsconfig。`lib/index.js` 应可从仓库根 `node -e "import('./lib/index.js')"` 直接解析。
 - **响应压缩是进程级 prototype patch**：`src/compress.ts` 直接替换 `http.ServerResponse.prototype` 的 writeHead/write/end（disposer 还原），作用于 DSH Web 进程内所有响应而不只是本插件路由；仅压缩 ≥4KB 且 content-type 含 json、无既有 content-encoding、客户端 Accept-Encoding 支持 br/gzip 的响应，SSE 有意不压。改动该文件时必须保持三条不变式：小 JSON 原样字节透传（原头不动）、Content-Length 与实发字节数一致、dispose 完整还原三个方法。
 
 ## Testing & QA
