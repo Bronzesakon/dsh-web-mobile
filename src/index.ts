@@ -5,7 +5,7 @@
  * a phone); the browser half ships via exports["./client"], discovered through
  * the package.json dsh.client declaration.
  */
-import { installResponseCompression } from './compress'
+import { installResponseCompression } from './compress.js'
 
 /** Minimal structural slice of the host cordis Context that apply() needs. */
 export interface HostContext {
