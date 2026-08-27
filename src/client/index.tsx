@@ -17,7 +17,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
-export const inject = ['slots', 'layout', 'locale', 'sessionLogDownload']
+// `layout` is optional: DSH Desktop advanced mode may omit the official
+// provider from the phone-side plugin graph. The mobile shell can still load
+// (and render its styles) while controls that need layout simply no-op.
+export const inject = ['slots', 'locale', 'sessionLogDownload']
 
 /**
  * Mobile-adaptive shell, browser half: injects the mobile stylesheet, then
@@ -163,7 +166,7 @@ export function apply(ctx: ClientContext): void {
     order: 10,
     locale: NS,
     inject: () => ({
-      toggleSidebar: () => ctx.layout.toggleSidebar(),
+      toggleSidebar: () => ctx.layout?.toggleSidebar?.(),
     }),
   }, MobileNavToggle))
 
@@ -186,7 +189,7 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: () => ({
       downloadSessionLog: (sessionId: string) => ctx.sessionLogDownload.download(sessionId),
-      toggleSidebar: () => ctx.layout.toggleSidebar(),
+      toggleSidebar: () => ctx.layout?.toggleSidebar?.(),
     }),
   }, MobileDrawerFooter))
 }

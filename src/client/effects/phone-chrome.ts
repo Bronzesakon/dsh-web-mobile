@@ -242,7 +242,7 @@ export function installPhoneChrome(ctx: ClientContext): void {
  */
 export function installOverlayInteractions(ctx: ClientContext): void {
   installMobileEffect(ctx, 'dsh-mobile-nav: drawer close (Escape + navigate)', () => {
-    const toggleSidebar = (): void => ctx.layout.toggleSidebar()
+    const toggleSidebar = (): void => ctx.layout?.toggleSidebar?.()
     const drawerOpen = (): boolean => {
       const frame = getFrame()
       return frame !== null && !frame.hasAttribute('data-sidebar-collapsed')
@@ -377,7 +377,7 @@ export function registerReconcileTasks(ctx: ClientContext): () => void {
     addReconcilerTask(createPreviewCloseTask()),
     addReconcilerTask(createSheetRiseTask()),
     addReconcilerTask(createStatsLineTask()),
-    addReconcilerTask(createOverlayTask(t, () => ctx.layout.toggleSidebar())),
+    addReconcilerTask(createOverlayTask(t, () => ctx.layout?.toggleSidebar?.())),
   ]
   return () => {
     for (const remove of removeTasks) remove()
