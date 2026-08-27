@@ -54,8 +54,9 @@ dsh plugin --profile web add link:/path/to/dsh-web-mobile
 
 - 修复 v2.1.5 版本安装后 node 报错问题，绷不住了（#31 by @Yurzi）
 - 手机上点抽屉历史会话仍可能「抽屉收起但对话不打开」（#32 by @chstd）
+- 上游子代理插件 0.1.0-rc.6 起芯片「点开一闪即退」（PR #33 by @EricJin2002）
 - 手机端点插件市场搜索框触发 iOS 强制放大且无法恢复：搜索框字号提到 16px（PR #35 by @BuvkB）
-- 刘海屏上界面能被上滑抬起、输入框下方露白、最新消息被压住：frame 补 `box-sizing: border-box`，安全区从视口高度内扣除
+- 刘海屏上界面能被上滑抬起、输入框下方露白、最新消息被压住
 
 ### v2.1.5
 
